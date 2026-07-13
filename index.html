@@ -153,6 +153,13 @@ input.ans:focus{outline:none;border-color:var(--accent)}
 .fb.bad .verdict{color:var(--bad)}
 .fb .how{font-size:14px;color:var(--ink);opacity:.92}
 .fb .how b{font-family:var(--mono);font-weight:600}
+table.fmap{border-collapse:collapse;margin:8px auto;font:600 13px var(--mono);font-variant-numeric:tabular-nums}
+.fmap th,.fmap td{min-width:36px;height:34px;text-align:center;border:1px solid var(--line);padding:2px}
+.fmap th{color:var(--muted);font-weight:600;background:var(--surface)}
+.fmap td.f-good{background:var(--good-soft);color:var(--good)}
+.fmap td.f-mid{background:var(--accent-soft);color:var(--accent-strong)}
+.fmap td.f-slow{background:var(--bad-soft);color:var(--bad)}
+.fmap td.f-unk{color:var(--muted);background:var(--surface)}
 .note{
   background:var(--surface);border:1px dashed var(--line);border-radius:12px;
   padding:12px 15px;font-size:13px;color:var(--muted);line-height:1.55;margin-top:22px;
@@ -238,6 +245,47 @@ D("teens", "Multiplying teens", "Numbers between 10 and 20, fast", () => {
   const a = R(11, 19), b = R(11, 19);
   return { q: `${a} × ${b}`, kind: "num", a: a * b,
     how: `${a} + ${b % 10} = <b>${a + b % 10}</b>, ×10 → <b>${(a + b % 10) * 10}</b>, plus ${a % 10} × ${b % 10} = <b>${(a % 10) * (b % 10)}</b> → <b>${a * b}</b>.` };
+});
+
+/* ---- Times Table Sprint (fact fluency) ---- */
+let factStats = {};
+try { factStats = JSON.parse(localStorage.getItem("mmg-facts-v1") || "{}"); } catch (e) { factStats = {}; }
+const saveFacts = () => { try { localStorage.setItem("mmg-facts-v1", JSON.stringify(factStats)); } catch (e) {} };
+const factKey = (a, b) => Math.min(a, b) + "x" + Math.max(a, b);
+const ALL_FACTS = [];
+for (let i = 2; i <= 9; i++) for (let j = i; j <= 9; j++) ALL_FACTS.push([i, j]);
+/* score = estimated answer time in ms, padded by error rate; unseen facts sit in the middle */
+const factScore = (k) => {
+  const f = factStats[k];
+  if (!f || f.n < 2) return 4000;
+  return f.t + 2500 * (f.e / f.n);
+};
+function updateFact(k, correct, ms) {
+  const f = factStats[k] || (factStats[k] = { t: 3000, n: 0, e: 0 });
+  f.n++; if (!correct) f.e++;
+  const clipped = Math.min(ms, 8000);
+  f.t = Math.round(f.t * 0.7 + clipped * 0.3 + (correct ? 0 : 1500));
+  saveFacts();
+}
+D("ttsprint", "Times Table Sprint", "Timed single-digit facts — your slowest get served most", () => {
+  let pair;
+  if (Math.random() < 0.7) {
+    const ranked = ALL_FACTS
+      .map(p => [factScore(factKey(p[0], p[1])), p])
+      .sort((x, y) => y[0] - x[0]);
+    pair = ranked[R(0, 9)][1]; // one of the 10 slowest facts
+  } else {
+    pair = pick(ALL_FACTS); // occasional uniform pick keeps estimates fresh
+  }
+  const [a, b] = Math.random() < 0.5 ? pair : [pair[1], pair[0]];
+  const m = Math.min(a, b) === 9 ? Math.max(a, b) : (a === 9 ? b : (b === 9 ? a : 0));
+  let tip;
+  if (a === 9 || b === 9) tip = `Nines rule: 9 × ${m} starts with ${m - 1} and the digits sum to 9 → <b>${9 * m}</b>.`;
+  else if (a === 8 || b === 8) { const o = a === 8 ? b : a; tip = `Eights: double ${o} three times — ${o} → ${2 * o} → ${4 * o} → <b>${8 * o}</b>.`; }
+  else if (a === 3 || b === 3) tip = `Threes: it's the ${a === 3 ? b : a}th step counting 3, 6, 9, 12… → <b>${a * b}</b>.`;
+  else if (a === 6 || b === 6) { const o = a === 6 ? b : a; tip = `Sixes: 5 × ${o} = ${5 * o}, plus ${o} → <b>${6 * o}</b>.`; }
+  else tip = `${a} × ${b} = <b>${a * b}</b> — aim for instant recall, under 1.5 s.`;
+  return { q: `${a} × ${b}`, kind: "num", a: a * b, factKey: factKey(a, b), timed: true, how: tip };
 });
 
 /* ---- Lecture 2 ---- */
@@ -564,7 +612,7 @@ const LESSONS = [
       { h: "Same tens, units summing to 10", p: "Like 84 × 86: first digit × next digit up, then attach the product of the units digits (as two digits).", ex: "84 × 86 → 8 × 9 = 72, 4 × 6 = 24 → 7,224" },
       { h: "Teens are easy", p: "13 × 6 is (10 × 6) + (3 × 6). For teen × teen: add one number to the other's units digit, ×10, then add the product of the units.", ex: "13 × 14 → (13+4) × 10 = 170, +3×4 → 182" }
     ],
-    drills: ["warmup", "mult11", "sq5", "sum10", "teens"] },
+    drills: ["ttsprint", "warmup", "mult11", "sq5", "sum10", "teens"] },
   { n: 2, title: "Mental Addition and Subtraction", tag: "One digit at a time — and the power of complements",
     cards: [
       { h: "Add the big parts first", p: "62 + 24: add 20 to get 82, then 4 to get 86. Three digits work the same: hundreds, tens, units. Each step simplifies the problem." },
@@ -658,7 +706,7 @@ const LESSONS = [
     drills: ["cuberoot", "sq3d", "vedic"] }
 ];
 
-const WORKOUT_POOL = ["mult11", "sq5", "sum10", "add2", "add3", "sub3", "comp1000", "change", "mul2x1", "mul3x1", "factor", "div1", "div2", "digitsum", "close100", "sq2d", "mix2x2", "w2n", "weekday", "sq3d", "cuberoot", "teens", "close2x2"];
+const WORKOUT_POOL = ["ttsprint", "mult11", "sq5", "sum10", "add2", "add3", "sub3", "comp1000", "change", "mul2x1", "mul3x1", "factor", "div1", "div2", "digitsum", "close100", "sq2d", "mix2x2", "w2n", "weekday", "sq3d", "cuberoot", "teens", "close2x2"];
 
 /* ---------- state & stats ---------- */
 const $ = (s) => document.querySelector(s);
@@ -690,13 +738,18 @@ function showHome() {
     <p class="sub">Lightning-calculation techniques, one lecture at a time — with unlimited practice problems. ${totalOk ? `<b>${F(totalOk)}</b> solved so far.` : "Start with Lecture 1."}</p>
     <button class="lesson-row workout" data-workout="1">
       <span class="num">⚡</span>
-      <span class="body"><p class="t">Daily Workout</p><p class="d">A random mix from every technique you've met</p></span>
+      <span class="body"><p class="t">Daily Workout</p><p class="d">Adaptive mix — prioritizes what's weak or hasn't been practiced lately</p></span>
+      <span class="prog"></span></button>
+    <button class="lesson-row workout" data-sprint="1">
+      <span class="num">⏱</span>
+      <span class="body"><p class="t">Times Table Sprint</p><p class="d">Instant recall of single-digit facts — the bottleneck under everything</p></span>
       <span class="prog"></span></button>
     <p class="kicker">The Twelve Lectures</p>
     ${rows}
     <p class="note">A study companion to Arthur Benjamin's Great Courses series <i>The Secrets of Mental Math</i>. Watch each lecture, read the recap here, then drill until it's reflex. Explanations are original; progress is stored only on this device.</p>`;
   view.querySelectorAll("[data-lesson]").forEach(b => b.addEventListener("click", () => showLesson(+b.dataset.lesson)));
   view.querySelector("[data-workout]").addEventListener("click", () => startDrill(null, { workout: true, backTo: "home" }));
+  view.querySelector("[data-sprint]").addEventListener("click", () => startDrill("ttsprint", { backTo: "home" }));
 }
 
 /* ---------- lesson ---------- */
@@ -723,8 +776,23 @@ function startDrill(drillId, opts) {
   nextProblem();
 }
 
+function workoutPick() {
+  /* spacing + weakness weighting: long-unseen and low-accuracy drills get picked more */
+  const now = Date.now();
+  const weights = WORKOUT_POOL.map(id => {
+    const s = stat(id);
+    if (!s.tries) return 1;
+    const days = s.last ? Math.min(14, (now - s.last) / 86400000) : 14;
+    const err = 1 - s.ok / s.tries;
+    return 0.5 + days * (0.5 + 2 * err);
+  });
+  let total = weights.reduce((a, b) => a + b, 0), roll = Math.random() * total;
+  for (let i = 0; i < weights.length; i++) { roll -= weights[i]; if (roll <= 0) return WORKOUT_POOL[i]; }
+  return WORKOUT_POOL[WORKOUT_POOL.length - 1];
+}
+
 function currentDrill() {
-  return session.workout ? DRILLS[pick(WORKOUT_POOL)] : DRILLS[session.drillId];
+  return session.workout ? DRILLS[workoutPick()] : DRILLS[session.drillId];
 }
 
 function nextProblem() {
@@ -732,6 +800,7 @@ function nextProblem() {
   session.currentId = d.id;
   session.item = d.gen();
   session.graded = false;
+  session.t0 = Date.now();
   renderProblem(d);
 }
 
@@ -754,7 +823,7 @@ function renderProblem(d) {
   } else {
     inputHtml = `<div class="answer-zone">
         <input class="ans" id="ansQ" inputmode="${it.kind === "dec" ? "decimal" : "numeric"}" autocomplete="off" placeholder="?">
-      </div><div class="btnrow"><button class="btn" id="checkBtn">Check</button><button class="btn ghost" id="skipBtn">Show me</button></div>`;
+      </div><div class="btnrow"><button class="btn" id="checkBtn">Check</button><button class="btn ghost" id="skipBtn">Show me</button>${it.timed ? '<button class="btn ghost" id="mapBtn">Speed map</button>' : ""}</div>`;
   }
   view.innerHTML = `
     <div class="statbar">
@@ -772,6 +841,7 @@ function renderProblem(d) {
   } else {
     $("#checkBtn").addEventListener("click", grade);
     $("#skipBtn").addEventListener("click", reveal);
+    if (it.timed) $("#mapBtn").addEventListener("click", showFactMap);
     const q = $("#ansQ"); q.focus();
     view.querySelectorAll("input.ans").forEach(inp => inp.addEventListener("keydown", (e) => {
       if (e.key === "Enter") { e.preventDefault(); if (it.kind === "rem" && inp.id === "ansQ" && $("#ansR").value === "") $("#ansR").focus(); else grade(); }
@@ -830,21 +900,58 @@ function finishGrade(correct, given) {
   session.graded = true;
   session.tries++;
   const s = stat(session.currentId);
-  s.tries++;
+  s.tries++; s.last = Date.now();
   if (correct) { session.solved++; session.streak++; s.ok++; if (session.streak > s.best) s.best = session.streak; }
   else session.streak = 0;
   saveStats();
-  showFeedback(correct, correct ? pick(["Correct!", "Nailed it!", "Yes!", "Lightning!"]) : "Not quite — it's " + answerText(session.item) + ".");
+  const elapsed = Date.now() - session.t0;
+  let verdict;
+  if (session.item.factKey) {
+    updateFact(session.item.factKey, correct, elapsed);
+    const secs = (elapsed / 1000).toFixed(1);
+    verdict = correct
+      ? (elapsed <= 1500 ? `Correct in ${secs} s ⚡ — that's automatic!` : `Correct in ${secs} s — aim under 1.5 s`)
+      : `Not quite — it's ${answerText(session.item)}.`;
+  } else {
+    verdict = correct ? pick(["Correct!", "Nailed it!", "Yes!", "Lightning!"]) : "Not quite — it's " + answerText(session.item) + ".";
+  }
+  showFeedback(correct, verdict);
 }
 
 function reveal() {
   if (session.graded) return;
   session.graded = true;
   session.tries++;
-  const s = stat(session.currentId); s.tries++;
+  const s = stat(session.currentId); s.tries++; s.last = Date.now();
   session.streak = 0;
   saveStats();
+  if (session.item.factKey) updateFact(session.item.factKey, false, 6000);
   showFeedback(null, `Answer: ${answerText(session.item)}`);
+}
+
+/* ---------- times-table speed map ---------- */
+function showFactMap() {
+  nav = { screen: "map" };
+  topTitle.textContent = "Times table speed map";
+  topStreak.textContent = "";
+  let t = `<div style="overflow-x:auto"><table class="fmap"><tr><th>×</th>`;
+  for (let j = 2; j <= 9; j++) t += `<th>${j}</th>`;
+  t += `</tr>`;
+  for (let i = 2; i <= 9; i++) {
+    t += `<tr><th>${i}</th>`;
+    for (let j = 2; j <= 9; j++) {
+      const k = factKey(i, j), f = factStats[k], sc = factScore(k);
+      const cls = (!f || f.n < 2) ? "f-unk" : sc < 1600 ? "f-good" : sc < 3000 ? "f-mid" : "f-slow";
+      t += `<td class="${cls}">${f && f.n >= 2 ? (f.t / 1000).toFixed(1) : "·"}</td>`;
+    }
+    t += `</tr>`;
+  }
+  t += `</table></div>`;
+  view.innerHTML = `<p class="kicker">Average answer time, seconds</p>${t}
+    <p class="sub">Green = automatic (under ~1.5 s). Amber = correct but slow. Red = these steal your working memory mid-calculation — the sprint serves them most often. Dots are unmeasured.</p>
+    <div class="btnrow"><button class="btn" id="mapBack">Back to sprint</button></div>`;
+  $("#mapBack").addEventListener("click", () => { nav = { screen: "drill" }; nextProblem(); });
+  window.scrollTo(0, 0);
 }
 
 function showFeedback(correct, verdict) {
@@ -862,6 +969,7 @@ function showFeedback(correct, verdict) {
 
 /* ---------- navigation ---------- */
 $("#backBtn").addEventListener("click", () => {
+  if (nav.screen === "map") { nav = { screen: "drill" }; nextProblem(); return; }
   if (nav.screen === "drill" && session && session.backTo === "lesson") showLesson(session.lesson);
   else showHome();
 });

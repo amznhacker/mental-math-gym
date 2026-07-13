@@ -19,6 +19,17 @@ locally on your device (nothing is uploaded anywhere).
 Everything is a single `index.html` — no build step, no dependencies, works offline
 once loaded.
 
+
+## Learning science built in
+
+- **Retrieval practice** — every screen is active recall with immediate worked-step feedback.
+- **Fact fluency by latency, not accuracy** — the *Times Table Sprint* times each single-digit
+  fact, keeps a per-fact speed profile, and serves your slowest facts most often. A heat map
+  shows which facts are automatic (<1.5 s) and which still steal working memory. Slow facts —
+  not unknown ones — are the usual bottleneck in mental calculation.
+- **Spacing + interleaving** — the *Daily Workout* weights drill selection by your error rate
+  and how long since you last practiced each technique, so fading skills resurface.
+
 ## Deploy on GitHub Pages (free)
 
 1. Create a new repository on GitHub (e.g. `mental-math-gym`), public.
