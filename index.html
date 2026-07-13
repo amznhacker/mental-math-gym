@@ -1,0 +1,878 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Mental Math Gym</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#151A28">
+<style>
+:root{
+  --paper:#FAF9F3; --surface:#FFFFFF; --ink:#1E2436; --muted:#6B7080;
+  --accent:#D98E04; --accent-strong:#B37503; --accent-soft:#FBF0D9;
+  --good:#2E9E6B; --good-soft:#E3F3EC; --bad:#D0453E; --bad-soft:#FAE7E6;
+  --line:#E3E1D6; --grid:rgba(90,110,160,.07);
+  --serif:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;
+  --sans:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",sans-serif;
+  --mono:ui-monospace,"SF Mono","Cascadia Code",Menlo,Consolas,"Liberation Mono",monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --paper:#151A28; --surface:#1D2334; --ink:#EDEDE4; --muted:#9BA0AE;
+    --accent:#F0B429; --accent-strong:#F7C64F; --accent-soft:#2B2A1E;
+    --good:#4CBE8D; --good-soft:#1C3229; --bad:#E4736D; --bad-soft:#3A2422;
+    --line:#2C3347; --grid:rgba(160,180,230,.055);
+  }
+}
+:root[data-theme="light"]{
+  --paper:#FAF9F3; --surface:#FFFFFF; --ink:#1E2436; --muted:#6B7080;
+  --accent:#D98E04; --accent-strong:#B37503; --accent-soft:#FBF0D9;
+  --good:#2E9E6B; --good-soft:#E3F3EC; --bad:#D0453E; --bad-soft:#FAE7E6;
+  --line:#E3E1D6; --grid:rgba(90,110,160,.07);
+}
+:root[data-theme="dark"]{
+  --paper:#151A28; --surface:#1D2334; --ink:#EDEDE4; --muted:#9BA0AE;
+  --accent:#F0B429; --accent-strong:#F7C64F; --accent-soft:#2B2A1E;
+  --good:#4CBE8D; --good-soft:#1C3229; --bad:#E4736D; --bad-soft:#3A2422;
+  --line:#2C3347; --grid:rgba(160,180,230,.055);
+}
+html,body{margin:0;padding:0}
+body{background:var(--paper)}
+#app{
+  min-height:100vh; color:var(--ink); font-family:var(--sans);
+  background:
+    linear-gradient(var(--grid) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+  background-size:28px 28px;
+  -webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:640px;margin:0 auto;padding:0 18px 64px}
+.top{
+  position:sticky;top:0;z-index:5;display:flex;align-items:center;gap:10px;
+  padding:14px 4px 12px;background:color-mix(in srgb, var(--paper) 88%, transparent);
+  backdrop-filter:blur(6px);border-bottom:1px solid var(--line);margin-bottom:18px;
+}
+.top .back{
+  border:1px solid var(--line);background:var(--surface);color:var(--ink);
+  border-radius:8px;padding:7px 12px;font:600 14px var(--sans);cursor:pointer;
+}
+.top .back:active{transform:translateY(1px)}
+.top h2{font:700 17px/1.2 var(--serif);margin:0;flex:1;text-wrap:balance}
+.top .streak{font:600 13px var(--mono);color:var(--accent-strong);white-space:nowrap}
+h1{font:700 34px/1.1 var(--serif);margin:26px 0 6px;letter-spacing:-.01em;text-wrap:balance}
+.sub{color:var(--muted);font-size:15px;line-height:1.55;margin:0 0 22px;max-width:46ch}
+.kicker{
+  font:700 11px var(--sans);letter-spacing:.14em;text-transform:uppercase;
+  color:var(--accent-strong);margin:26px 0 10px;
+}
+.lesson-row{
+  display:flex;align-items:center;gap:14px;width:100%;text-align:left;
+  background:var(--surface);border:1px solid var(--line);border-radius:12px;
+  padding:13px 15px;margin-bottom:9px;cursor:pointer;color:var(--ink);font-family:var(--sans);
+}
+.lesson-row:active{transform:translateY(1px)}
+.lesson-row .num{
+  font:700 24px var(--serif);color:var(--accent);min-width:32px;text-align:center;
+  font-variant-numeric:tabular-nums;
+}
+.lesson-row .body{flex:1;min-width:0}
+.lesson-row .t{font:650 15.5px/1.25 var(--sans);margin:0 0 2px}
+.lesson-row .d{font-size:12.5px;color:var(--muted);margin:0;line-height:1.4}
+.lesson-row .prog{font:600 12px var(--mono);color:var(--muted);white-space:nowrap}
+.lesson-row.workout{border-color:var(--accent);background:var(--accent-soft)}
+.tech{
+  background:var(--surface);border:1px solid var(--line);border-radius:12px;
+  padding:16px 18px;margin-bottom:12px;
+}
+.tech h3{font:700 17px/1.3 var(--serif);margin:0 0 8px;text-wrap:balance}
+.tech p{margin:0 0 8px;font-size:14.5px;line-height:1.6;color:var(--ink)}
+.tech p:last-child{margin-bottom:0}
+.tech .ex{
+  font:500 13.5px/1.7 var(--mono);background:var(--accent-soft);
+  border-radius:8px;padding:10px 13px;margin:10px 0 2px;overflow-x:auto;
+  font-variant-numeric:tabular-nums;
+}
+.drill-row{
+  display:flex;align-items:center;gap:12px;width:100%;text-align:left;
+  background:var(--surface);border:1px solid var(--line);border-radius:12px;
+  padding:12px 15px;margin-bottom:8px;cursor:pointer;color:var(--ink);
+}
+.drill-row:active{transform:translateY(1px)}
+.drill-row .go{color:var(--accent-strong);font:700 18px var(--serif)}
+.drill-row .body{flex:1}
+.drill-row .t{font:650 14.5px var(--sans);margin:0 0 1px}
+.drill-row .d{font-size:12.5px;color:var(--muted);margin:0}
+.drill-row .prog{font:600 12px var(--mono);color:var(--muted)}
+.statbar{
+  display:flex;gap:8px;margin-bottom:16px;font-variant-numeric:tabular-nums;
+}
+.chip{
+  flex:1;background:var(--surface);border:1px solid var(--line);border-radius:10px;
+  padding:8px 6px;text-align:center;
+}
+.chip .v{font:700 18px var(--mono);display:block}
+.chip .l{font:600 10.5px var(--sans);letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.problem{
+  font:600 clamp(26px,8vw,40px)/1.3 var(--mono);text-align:center;
+  padding:34px 10px 8px;font-variant-numeric:tabular-nums;letter-spacing:.01em;
+  overflow-x:auto;
+}
+.pq{color:var(--muted);font:500 14px var(--sans);text-align:center;margin:0 0 18px;line-height:1.5}
+.answer-zone{display:flex;gap:10px;justify-content:center;align-items:center;flex-wrap:wrap;margin-bottom:14px}
+input.ans{
+  font:600 24px var(--mono);width:170px;max-width:60vw;text-align:center;
+  padding:12px 10px;border-radius:12px;border:2px solid var(--line);
+  background:var(--surface);color:var(--ink);font-variant-numeric:tabular-nums;
+}
+input.ans.small{width:110px}
+input.ans:focus{outline:none;border-color:var(--accent)}
+.rlabel{font:600 16px var(--mono);color:var(--muted)}
+.btn{
+  border:none;border-radius:12px;padding:13px 24px;cursor:pointer;
+  font:700 16px var(--sans);background:var(--accent);color:#20180A;transition:transform .05s;
+}
+.btn:active{transform:translateY(1px)}
+.btn.ghost{background:var(--surface);color:var(--ink);border:1px solid var(--line);font-weight:600}
+.btnrow{display:flex;gap:10px;justify-content:center;margin-bottom:18px}
+.choices{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:18px}
+.choices.wide{grid-template-columns:1fr}
+.choices button{
+  border:1.5px solid var(--line);background:var(--surface);color:var(--ink);
+  border-radius:11px;padding:13px 10px;font:600 16px var(--mono);cursor:pointer;
+  font-variant-numeric:tabular-nums;
+}
+.choices button:active{transform:translateY(1px)}
+.choices button.hit{border-color:var(--good);background:var(--good-soft)}
+.choices button.miss{border-color:var(--bad);background:var(--bad-soft)}
+.fb{
+  border-radius:12px;padding:14px 16px;margin-bottom:14px;font-size:15px;line-height:1.55;
+}
+.fb.good{background:var(--good-soft);border:1px solid var(--good)}
+.fb.bad{background:var(--bad-soft);border:1px solid var(--bad)}
+.fb .verdict{font:700 15px var(--sans);display:block;margin-bottom:4px}
+.fb.good .verdict{color:var(--good)}
+.fb.bad .verdict{color:var(--bad)}
+.fb .how{font-size:14px;color:var(--ink);opacity:.92}
+.fb .how b{font-family:var(--mono);font-weight:600}
+.note{
+  background:var(--surface);border:1px dashed var(--line);border-radius:12px;
+  padding:12px 15px;font-size:13px;color:var(--muted);line-height:1.55;margin-top:22px;
+}
+@media (prefers-reduced-motion: reduce){ *{transition:none!important} }
+button:focus-visible, input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+</style>
+</head>
+<body>
+<div id="app"><div class="wrap">
+  <div class="top" id="topbar" hidden>
+    <button class="back" id="backBtn" type="button">&#8592; Back</button>
+    <h2 id="topTitle"></h2>
+    <span class="streak" id="topStreak"></span>
+  </div>
+  <main id="view"></main>
+</div></div>
+<script>
+"use strict";
+/* ---------- helpers ---------- */
+const R = (a, b) => a + Math.floor(Math.random() * (b - a + 1));
+const pick = (arr) => arr[R(0, arr.length - 1)];
+const F = (n) => n.toLocaleString("en-US");
+const shuffle = (arr) => { const a = arr.slice(); for (let i = a.length - 1; i > 0; i--) { const j = R(0, i); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+const digitSum = (n) => { n = Math.abs(n); return n === 0 ? 0 : ((n - 1) % 9) + 1; };
+const sumDigitsOnce = (n) => String(Math.abs(n)).split("").reduce((s, c) => s + (+c), 0);
+
+/* ---------- drill generators ----------
+   Each gen() returns:
+   { q, sub?, kind:'num'|'dec'|'rem'|'mc', a, a2?, tol?, rtol?, choices?, how }
+--------------------------------------- */
+const DRILLS = {};
+const D = (id, name, desc, gen) => { DRILLS[id] = { id, name, desc, gen }; };
+
+/* ---- Lecture 1 ---- */
+D("warmup", "Left-to-right warm-ups", "Easy sums and ×10s you can say instantly", () => {
+  const form = R(1, 3);
+  if (form === 1) {
+    const a = R(2, 9) * pick([100, 1000]), b = R(11, 99);
+    return { q: `${F(a)} + ${b}`, kind: "num", a: a + b,
+      how: `Say it left to right: <b>${F(a)}</b>, then append <b>${b}</b> → <b>${F(a + b)}</b>.` };
+  }
+  if (form === 2) {
+    const a = R(11, 99), b = R(1, 9) * pick([10, 100, 1000]);
+    return { q: `${a} + ${F(b)}`, kind: "num", a: a + b,
+      how: `The big part first: <b>${F(b)}</b> plus <b>${a}</b> → <b>${F(a + b)}</b>.` };
+  }
+  const a = R(11, 999), m = pick([10, 100, 1000]);
+  return { q: `${a} × ${F(m)}`, kind: "num", a: a * m,
+    how: `Attach ${String(m).length - 1} zero${m > 10 ? "s" : ""}: <b>${F(a * m)}</b>.` };
+});
+D("mult11", "Multiply by 11", "The classic: spread the digits, insert the sum", () => {
+  const hard = Math.random() < 0.3;
+  if (!hard) {
+    const n = R(12, 98), t = Math.floor(n / 10), u = n % 10, s = t + u;
+    return { q: `${n} × 11`, kind: "num", a: n * 11,
+      how: s > 9
+        ? `${t} + ${u} = <b>${s}</b> — more than 9, so carry: the middle keeps ${s % 10} and the ${t} becomes ${t + 1} → <b>${F(n * 11)}</b>.`
+        : `Split ${t}_${u} and insert the digit sum ${t}+${u}=<b>${s}</b> in the middle: <b>${n * 11}</b>.` };
+  }
+  const n = R(112, 987), d = String(n).split("").map(Number);
+  return { q: `${n} × 11`, kind: "num", a: n * 11,
+    how: `Keep the ends, insert neighbor sums: ${d[0]}+${d[1]}=<b>${d[0] + d[1]}</b> and ${d[1]}+${d[2]}=<b>${d[1] + d[2]}</b> (carry if needed) → <b>${F(n * 11)}</b>.` };
+});
+D("sq5", "Squares ending in 5", "First digit × next digit, attach 25", () => {
+  const n = Math.random() < 0.7 ? R(1, 9) * 10 + 5 : R(10, 19) * 10 + 5;
+  const h = Math.floor(n / 10);
+  return { q: `${n}²`, kind: "num", a: n * n,
+    how: `${h} × ${h + 1} = <b>${h * (h + 1)}</b>, attach 25 → <b>${F(n * n)}</b>.` };
+});
+D("sum10", "Same tens, units sum to 10", "Like 84 × 86 — cousins of the 5² trick", () => {
+  const t = R(2, 9), u = R(1, 9), a = t * 10 + u, b = t * 10 + (10 - u);
+  const tail = u * (10 - u);
+  return { q: `${a} × ${b}`, kind: "num", a: a * b,
+    how: `${t} × ${t + 1} = <b>${t * (t + 1)}</b>, attach ${u} × ${10 - u} = <b>${tail < 10 ? "0" + tail : tail}</b> (two digits) → <b>${F(a * b)}</b>.` };
+});
+D("teens", "Multiplying teens", "Numbers between 10 and 20, fast", () => {
+  if (Math.random() < 0.5) {
+    const a = R(11, 19), b = R(3, 9);
+    return { q: `${a} × ${b}`, kind: "num", a: a * b,
+      how: `${b} × 10 = <b>${b * 10}</b>, plus ${b} × ${a - 10} = <b>${b * (a - 10)}</b> → <b>${a * b}</b>.` };
+  }
+  const a = R(11, 19), b = R(11, 19);
+  return { q: `${a} × ${b}`, kind: "num", a: a * b,
+    how: `${a} + ${b % 10} = <b>${a + b % 10}</b>, ×10 → <b>${(a + b % 10) * 10}</b>, plus ${a % 10} × ${b % 10} = <b>${(a % 10) * (b % 10)}</b> → <b>${a * b}</b>.` };
+});
+
+/* ---- Lecture 2 ---- */
+D("add2", "2-digit addition", "Tens first, then units", () => {
+  const a = R(23, 88), b = R(12, 88);
+  return { q: `${a} + ${b}`, kind: "num", a: a + b,
+    how: `${a} + ${Math.floor(b / 10) * 10} = <b>${a + Math.floor(b / 10) * 10}</b>, then + ${b % 10} → <b>${a + b}</b>.` };
+});
+D("add3", "3-digit addition", "Hundreds, tens, units — left to right", () => {
+  const a = R(120, 880), b = R(110, 880);
+  const b1 = Math.floor(b / 100) * 100, b2 = Math.floor((b % 100) / 10) * 10, b3 = b % 10;
+  const near = 100 - (b % 100);
+  const useComp = (b % 100) > 84;
+  return { q: `${a} + ${b}`, kind: "num", a: a + b,
+    how: useComp
+      ? `${b} is ${F(b1 + 100)} − ${near}: add ${a} + ${F(b1 + 100)} = <b>${F(a + b1 + 100)}</b>, subtract ${near} → <b>${F(a + b)}</b>.`
+      : `${a} + ${b1} = <b>${a + b1}</b>, + ${b2} = <b>${a + b1 + b2}</b>, + ${b3} → <b>${F(a + b)}</b>.` };
+});
+D("sub2", "2-digit subtraction", "Turn borrowing into easy addition", () => {
+  const a = R(41, 99), b = R(12, a - 11);
+  const borrow = (a % 10) < (b % 10);
+  const up = Math.ceil(b / 10) * 10;
+  return { q: `${a} − ${b}`, kind: "num", a: a - b,
+    how: borrow
+      ? `Subtract too much: ${a} − ${up} = <b>${a - up}</b>, add back ${up - b} → <b>${a - b}</b>.`
+      : `${a} − ${Math.floor(b / 10) * 10} = <b>${a - Math.floor(b / 10) * 10}</b>, then − ${b % 10} → <b>${a - b}</b>.` };
+});
+D("sub3", "3-digit subtraction", "Use complements when it borrows", () => {
+  const a = R(320, 980), b = R(120, a - 60);
+  const bl = b % 100, comp = 100 - bl;
+  const useComp = bl > 50;
+  const upH = (Math.floor(b / 100) + 1) * 100;
+  return { q: `${a} − ${b}`, kind: "num", a: a - b,
+    how: useComp
+      ? `${b} is ${F(upH)} − ${comp}: ${a} − ${F(upH)} = <b>${a - upH}</b>, add back ${comp} → <b>${a - b}</b>.`
+      : `${a} − ${Math.floor(b / 100) * 100} = <b>${a - Math.floor(b / 100) * 100}</b>, then subtract ${bl} left to right → <b>${a - b}</b>.` };
+});
+D("comp100", "Complements of 100", "How far from 100?", () => {
+  const n = R(11, 89);
+  const t = Math.floor(n / 10), u = n % 10;
+  return { q: `100 − ${n}`, sub: "Find the complement", kind: "num", a: 100 - n,
+    how: u === 0
+      ? `Ends in 0, so the complement does too: ${10 - t} and 0 → <b>${100 - n}</b>.`
+      : `First digits sum to 9 (${t}+${9 - t}), last to 10 (${u}+${10 - u}) → <b>${100 - n}</b>.` };
+});
+D("comp1000", "Complements of 1000", "Digits to 9, 9, then 10", () => {
+  const n = R(101, 899);
+  const d = String(n).split("").map(Number);
+  return { q: `1000 − ${n}`, sub: "Find the complement", kind: "num", a: 1000 - n,
+    how: n % 10 === 0
+      ? `Ends in 0: complement of ${n / 10} (from 100) with a 0 attached → <b>${1000 - n}</b>.`
+      : `Make the digits sum to 9, 9, 10: ${9 - d[0]}, ${9 - d[1]}, ${10 - d[2]} → <b>${1000 - n}</b>.` };
+});
+D("change", "Making change", "Dollars to one less, cents to 100", () => {
+  const base = pick([10, 20, 100]);
+  const dol = R(1, base - 2), c = R(1, 99);
+  const price = dol + c / 100, ans = base - price;
+  const adol = base - 1 - dol, ac = 100 - c;
+  return { q: `$${dol}.${String(c).padStart(2, "0")} from $${base}`, sub: "How much change? (e.g. 3.25)", kind: "dec", a: +ans.toFixed(2), tol: 0.001,
+    how: `Dollars sum to ${base - 1} (${dol}+${adol}), cents sum to 100 (${c}+${ac}) → <b>$${adol}.${String(ac).padStart(2, "0")}</b>.` };
+});
+
+/* ---- Lecture 3 ---- */
+D("mul2x1", "2-by-1 multiplication", "The building block of everything", () => {
+  const a = R(21, 99), b = R(3, 9);
+  const t = Math.floor(a / 10) * 10, u = a % 10;
+  return { q: `${a} × ${b}`, kind: "num", a: a * b,
+    how: `${b} × ${t} = <b>${b * t}</b>, plus ${b} × ${u} = <b>${b * u}</b> → <b>${F(a * b)}</b>.` };
+});
+D("mul3x1", "3-by-1 multiplication", "Left to right, adding as you go", () => {
+  const a = R(212, 989), b = R(3, 9);
+  const h = Math.floor(a / 100) * 100, t = Math.floor((a % 100) / 10) * 10, u = a % 10;
+  return { q: `${a} × ${b}`, kind: "num", a: a * b,
+    how: `${b} × ${h} = <b>${F(b * h)}</b>, + ${b} × ${t} = <b>${F(b * t)}</b> (running: ${F(b * (h + t))}), + ${b} × ${u} = <b>${b * u}</b> → <b>${F(a * b)}</b>.` };
+});
+D("factor", "Factoring method", "Break one number into small factors", () => {
+  const packs = [[12, 6, 2], [14, 7, 2], [15, 5, 3], [16, 8, 2], [18, 6, 3], [21, 7, 3], [24, 8, 3], [27, 9, 3], [28, 7, 4], [32, 8, 4], [36, 9, 4], [42, 7, 6], [45, 9, 5], [48, 8, 6], [56, 8, 7], [63, 9, 7], [72, 9, 8]];
+  const [b, f1, f2] = pick(packs); const a = R(21, 89);
+  return { q: `${a} × ${b}`, kind: "num", a: a * b,
+    how: `${b} = ${f1} × ${f2}: first ${a} × ${f1} = <b>${F(a * f1)}</b>, then × ${f2} → <b>${F(a * b)}</b>.` };
+});
+
+/* ---- Lecture 4 ---- */
+D("div1", "1-digit division", "Quotient builds left to right", () => {
+  const d = R(3, 9), n = R(50, 989);
+  const q = Math.floor(n / d), r = n % d;
+  const tens = Math.floor(q / 10) * 10;
+  return { q: `${n} ÷ ${d}`, sub: "Give quotient and remainder", kind: "rem", a: q, a2: r,
+    how: `${d} × ${tens} = ${d * tens}, leaving ${n - d * tens}; ${d} goes in ${q - tens} more time${q - tens === 1 ? "" : "s"} → <b>${q} r ${r}</b>.` };
+});
+D("div2", "2-digit division", "Your 2-by-1 multiplication pays off", () => {
+  const d = R(12, 79), n = R(d * 3 + 1, 999);
+  const q = Math.floor(n / d), r = n % d;
+  return { q: `${n} ÷ ${d}`, sub: "Give quotient and remainder", kind: "rem", a: q, a2: r,
+    how: `${d} × ${q} = <b>${F(d * q)}</b>, and ${n} − ${F(d * q)} = <b>${r}</b> → ${q} r ${r}. (Overshoot and back off if your first guess is too big.)` };
+});
+D("divis", "Divisibility tests", "Spot factors without dividing", () => {
+  const k = pick([3, 4, 6, 8, 9, 11]);
+  const yes = Math.random() < 0.5;
+  let n = R(120, 9800);
+  if (yes) { n = n - (n % k); } else if (n % k === 0) { n = n + R(1, k - 1); }
+  const rules = {
+    3: `digit sum ${sumDigitsOnce(n)} ${sumDigitsOnce(n) % 3 === 0 ? "is" : "is not"} a multiple of 3`,
+    9: `digit sum ${sumDigitsOnce(n)} ${sumDigitsOnce(n) % 9 === 0 ? "is" : "is not"} a multiple of 9`,
+    4: `last two digits ${String(n).slice(-2)} ${n % 4 === 0 ? "are" : "are not"} a multiple of 4`,
+    8: `last three digits ${String(n).slice(-3)} ${n % 8 === 0 ? "are" : "are not"} a multiple of 8`,
+    6: `it ${n % 2 === 0 ? "is" : "is not"} even and digit sum ${sumDigitsOnce(n)} ${sumDigitsOnce(n) % 3 === 0 ? "is" : "is not"} a multiple of 3`,
+    11: `alternating digit sum is ${String(n).split("").reduce((s, c, i) => s + (i % 2 ? -1 : 1) * (+c), 0)}, ${n % 11 === 0 ? "" : "not "}a multiple of 11`
+  };
+  return { q: `Is ${F(n)} divisible by ${k}?`, kind: "mc", choices: ["Yes", "No"], a: n % k === 0 ? "Yes" : "No",
+    how: `Test for ${k}: ${rules[k]} → <b>${n % k === 0 ? "divisible" : "not divisible"}</b>.` };
+});
+D("sevenths", "The sevenths circle", "One cycle to rule them all: 142857", () => {
+  const k = R(1, 6);
+  const cyc = "142857142857";
+  const starts = { 1: 0, 2: 2, 3: 1, 4: 4, 5: 5, 6: 3 };
+  const dec = (kk) => cyc.substr(starts[kk], 6);
+  const correct = "0." + dec(k) + "…";
+  const opts = shuffle([1, 2, 3, 4, 5, 6].filter(x => x !== k)).slice(0, 3).map(x => "0." + dec(x) + "…");
+  return { q: `${k}/7 = ?`, kind: "mc", choices: shuffle([correct, ...opts]), a: correct,
+    how: `All sevenths cycle through 1-4-2-8-5-7. Since ${k}/7 ≈ 0.${Math.floor(k * 10 / 7)}, start the cycle there → <b>${correct}</b>` };
+});
+
+/* ---- Lecture 5 ---- */
+D("digits", "How many digits?", "Size up an answer before computing", () => {
+  const da = R(2, 4), db = R(2, 3);
+  const a = R(10 ** (da - 1), 10 ** da - 1), b = R(10 ** (db - 1), 10 ** db - 1);
+  const len = String(a * b).length;
+  const lead = (+String(a)[0]) * (+String(b)[0]);
+  return { q: `${F(a)} × ${F(b)}`, sub: "How many digits will the answer have?", kind: "mc",
+    choices: [String(da + db - 1), String(da + db)], a: String(len),
+    how: `${da}-digit × ${db}-digit gives ${da + db} or ${da + db - 1} digits. Leading digits ${String(a)[0]} × ${String(b)[0]} = ${lead}: ${lead >= 10 ? "≥ 10, so the longer one" : lead <= 4 ? "≤ 4, so the shorter one" : "5–9 — could go either way"}. Exact: ${F(a * b)} → <b>${len} digits</b>.` };
+});
+D("rule70", "Rule of 70", "Years for money to double", () => {
+  const r = pick([1, 2, 5, 7, 10, 14]);
+  return { q: `Money grows at ${r}% per year.`, sub: "About how many years to double?", kind: "num", a: 70 / r,
+    how: `Rule of 70: 70 ÷ ${r} = <b>${70 / r} years</b>.` };
+});
+D("sqrtest", "Square root estimates", "Divide and average", () => {
+  let n = R(20, 900);
+  while (Number.isInteger(Math.sqrt(n))) n = R(20, 900);
+  const g = Math.round(Math.sqrt(n));
+  const div = n / g, avg = (g + div) / 2;
+  return { q: `√${n} ≈ ?`, sub: "Within 2% counts as correct (decimals ok)", kind: "dec", a: Math.sqrt(n), rtol: 0.02,
+    how: `Guess ${g} (${g}² = ${g * g}). Divide: ${n} ÷ ${g} ≈ ${div.toFixed(2)}. Average: (${g} + ${div.toFixed(2)}) / 2 ≈ <b>${avg.toFixed(2)}</b>. True value ${Math.sqrt(n).toFixed(3)}.` };
+});
+
+/* ---- Lecture 6 ---- */
+D("digitsum", "Digit sums (casting out nines)", "Reduce any number to 1–9", () => {
+  const n = R(1000, 99999);
+  return { q: `Reduce ${F(n)}`, sub: "Keep summing digits until one digit remains", kind: "num", a: digitSum(n),
+    how: `Digits sum to ${sumDigitsOnce(n)}${sumDigitsOnce(n) > 9 ? ", which reduces to <b>" + digitSum(n) + "</b>" : ""}. (That's ${F(n)} mod 9, where 9 stays 9.)` };
+});
+D("castcheck", "Check by casting out nines", "Catch calculation errors fast", () => {
+  const a = R(120, 980), b = R(12, 98);
+  let p = a * b;
+  const corrupt = Math.random() < 0.5;
+  if (corrupt) p += pick([1, 2, 3, 4, 5, 6, 7, 8]) * pick([1, 10, 100]);
+  const ok = digitSum(p) === digitSum(digitSum(a) * digitSum(b));
+  return { q: `${a} × ${b} = ${F(p)}`, sub: "Consistent by casting out nines?", kind: "mc",
+    choices: ["Consistent", "Inconsistent"], a: ok ? "Consistent" : "Inconsistent",
+    how: `${a}→<b>${digitSum(a)}</b>, ${b}→<b>${digitSum(b)}</b>; product of those reduces to <b>${digitSum(digitSum(a) * digitSum(b))}</b>. The stated answer reduces to <b>${digitSum(p)}</b> → ${ok ? "match (consistent — though a match doesn't guarantee correctness)" : "no match: definitely wrong"}.` };
+});
+D("close100", "Close-together, near 100", "107 × 111 in two seconds", () => {
+  const a = R(96, 112), b = R(96, 112);
+  const da = a - 100, db = b - 100;
+  const head = a + db, tail = da * db;
+  return { q: `${a} × ${b}`, kind: "num", a: a * b,
+    how: `Distances from 100: ${da >= 0 ? "+" : ""}${da} and ${db >= 0 ? "+" : ""}${db}. Cross-add: ${a} + (${db >= 0 ? "+" : ""}${db}) = <b>${head}</b> → ${F(head * 100)}. Add ${da}×${db} = <b>${tail}</b> → <b>${F(a * b)}</b>.` };
+});
+
+/* ---- Lecture 7 ---- */
+D("sq2d", "2-digit squares", "Slide to a round number, then correct", () => {
+  const n = R(31, 99), d = n % 10 <= 5 ? n % 10 : n % 10 - 10;
+  const z1 = n - d, z2 = n + d;
+  return { q: `${n}²`, kind: "num", a: n * n,
+    how: `Go ${d >= 0 ? "down" : "up"} ${Math.abs(d)} to ${z1}, and ${d >= 0 ? "up" : "down"} to ${z2}: ${z1} × ${z2} = <b>${F(z1 * z2)}</b>, plus ${Math.abs(d)}² = ${d * d} → <b>${F(n * n)}</b>.` };
+});
+D("addmethod", "Addition method 2×2", "Round one number down", () => {
+  const a = R(21, 99), b = R(2, 9) * 10 + R(1, 3);
+  const bt = Math.floor(b / 10) * 10, bu = b % 10;
+  return { q: `${a} × ${b}`, kind: "num", a: a * b,
+    how: `(${a} × ${bt}) + (${a} × ${bu}) = ${F(a * bt)} + ${a * bu} → <b>${F(a * b)}</b>.` };
+});
+D("submethod", "Subtraction method 2×2", "Round one number up", () => {
+  const a = R(21, 99), b = pick([R(2, 9) * 10 + pick([8, 9]), R(91, 99)]);
+  const up = b >= 91 ? 100 : Math.ceil(b / 10) * 10, back = up - b;
+  return { q: `${a} × ${b}`, kind: "num", a: a * b,
+    how: `(${a} × ${up}) − (${a} × ${back}) = ${F(a * up)} − ${F(a * back)} → <b>${F(a * b)}</b>.` };
+});
+D("close2x2", "Close-together 2×2", "26 × 23: round base, cross-add", () => {
+  const base = R(2, 8) * 10, a = base + R(1, 8), b = base + R(1, 8);
+  const da = a - base, db = b - base;
+  return { q: `${a} × ${b}`, kind: "num", a: a * b,
+    how: `Base ${base}: cross-add ${a} + ${db} = <b>${a + db}</b>, so ${base} × ${a + db} = ${F(base * (a + db))}; add ${da} × ${db} = ${da * db} → <b>${F(a * b)}</b>.` };
+});
+D("mix2x2", "2×2 — choose your weapon", "Pick the easiest method each time", () => {
+  const a = R(21, 99), b = R(21, 99);
+  return { q: `${a} × ${b}`, kind: "num", a: a * b,
+    how: `One way: (${a} × ${Math.floor(b / 10) * 10}) + (${a} × ${b % 10}) = ${F(a * (Math.floor(b / 10) * 10))} + ${a * (b % 10)} → <b>${F(a * b)}</b>. Same digits → square trick; close together → cross-add; factorable → factor.` };
+});
+
+/* ---- Lecture 8 ---- */
+D("shortdiv", "Short division by teens", "÷11 to ÷19 with a running remainder", () => {
+  const d = R(11, 19), n = R(1000, 9999);
+  const q = Math.floor(n / d), r = n % d;
+  return { q: `${F(n)} ÷ ${d}`, sub: "Quotient and remainder (paper allowed!)", kind: "rem", a: q, a2: r,
+    how: `${d} × ${F(q)} = ${F(d * q)}; ${F(n)} − ${F(d * q)} = <b>${r}</b> → ${F(q)} r ${r}.` };
+});
+D("vedic", "Vedic division", "Divide by 29 as easily as by 3", () => {
+  const d = pick([19, 29, 39, 49, 59, 79, 89]), n = R(10000, 99999);
+  const q = Math.floor(n / d), r = n % d;
+  return { q: `${F(n)} ÷ ${d}`, sub: "Quotient and remainder — try the Vedic method on paper", kind: "rem", a: q, a2: r,
+    how: `Divide by ${(d + 1) / 10} instead of ${d}, adding each quotient digit back in as you go (that compensates for using ${d + 1} instead of ${d}). Answer: <b>${F(q)} r ${r}</b>.` };
+});
+
+/* ---- Lecture 9 ---- */
+const MAJOR_WORDS = [
+  ["rabbit", 491], ["party", 941], ["rose", 40], ["tin", 12], ["tot", 11], ["tomb", 13],
+  ["movie", 38], ["jam", 63], ["knife", 28], ["lion", 52], ["dog", 17], ["cat", 71],
+  ["fish", 86], ["phone", 82], ["nail", 25], ["rock", 47], ["leaf", 58], ["ship", 69],
+  ["coffee", 78], ["pen", 92], ["book", 97], ["moon", 32], ["mule", 35], ["tire", 14],
+  ["chef", 68], ["match", 36], ["map", 39], ["bell", 95], ["ram", 43], ["wine", 2]
+];
+const PEGS = [["tea", 1], ["knee", 2], ["moo", 3], ["ear", 4], ["oil", 5], ["shoe", 6], ["key", 7], ["foe", 8], ["pie", 9], ["dice", 10]];
+const MAJOR_MAP = "1 = t/d · 2 = n · 3 = m · 4 = r · 5 = L · 6 = ch/sh/j · 7 = k/g · 8 = f/v · 9 = p/b · 0 = s/z";
+D("w2n", "Word → number", "Decode words with the Major system", () => {
+  const [w, n] = pick(MAJOR_WORDS);
+  return { q: `“${w.toUpperCase()}”`, sub: "What number does this word encode?", kind: "num", a: n,
+    how: `Consonant sounds only (vowels and h/w/y are free): ${MAJOR_MAP}. “${w}” → <b>${n}</b>.` };
+});
+D("n2w", "Number → word", "Which word encodes this number?", () => {
+  const target = pick(MAJOR_WORDS);
+  const others = shuffle(MAJOR_WORDS.filter(w => w[1] !== target[1])).slice(0, 3);
+  return { q: `${target[1]}`, sub: "Pick the word that encodes it", kind: "mc",
+    choices: shuffle([target, ...others]).map(w => w[0]), a: target[0],
+    how: `${MAJOR_MAP}. “${target[0]}” spells <b>${target[1]}</b> in consonant sounds.` };
+});
+D("pegs", "Peg words 1–10", "Hooks for memorizing any list", () => {
+  const [w, n] = pick(PEGS);
+  const others = shuffle(PEGS.filter(p => p[1] !== n)).slice(0, 3);
+  return { q: `Peg word for ${n}?`, kind: "mc", choices: shuffle([[w, n], ...others]).map(p => p[0]), a: w,
+    how: `Each peg uses its digit's sound: <b>${w}</b> ↔ ${n}. (tea, knee, moo, ear, oil, shoe, key, foe, pie, dice)` };
+});
+
+/* ---- Lecture 10 ---- */
+const MONTH_CODES = [6, 2, 2, 5, 0, 3, 5, 1, 4, 6, 2, 4];
+const isLeap = (y) => (y % 4 === 0 && y % 100 !== 0) || y % 400 === 0;
+const CENT_ADJ = { 16: 0, 17: 5, 18: 3, 19: 1, 20: 0 };
+const yearCode = (y) => { const yy = y % 100; return (yy + Math.floor(yy / 4) + CENT_ADJ[Math.floor(y / 100)]) % 7; };
+const monthCode = (y, m) => (isLeap(y) && m <= 2) ? (m === 1 ? 5 : 1) : MONTH_CODES[m - 1];
+const DAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+D("yearcode", "Year codes", "years + leaps (+ century) − sevens", () => {
+  const y = R(1900, 2099), yy = y % 100, adj = CENT_ADJ[Math.floor(y / 100)];
+  return { q: `Year code for ${y}?`, sub: "Answer 0–6", kind: "num", a: yearCode(y),
+    how: `${yy} + ${Math.floor(yy / 4)} leaps${adj ? " + " + adj + " (1900s)" : ""} = ${yy + Math.floor(yy / 4) + adj}; cast out sevens → <b>${yearCode(y)}</b>.` };
+});
+D("weekday", "Day of the week", "month code + date + year code, mod 7", () => {
+  const y = R(1600, 2099), m = R(1, 12);
+  const dim = [31, isLeap(y) ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31][m - 1];
+  const day = R(1, dim);
+  const total = monthCode(y, m) + day + yearCode(y);
+  const wd = new Date(Date.UTC(y, m - 1, day)).getUTCDay();
+  const MN = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+  return { q: `${MN[m - 1]} ${day}, ${y}`, sub: "What day of the week? (Gregorian calendar)", kind: "mc", choices: DAYS, a: DAYS[wd], wideChoices: true,
+    how: `Month code ${monthCode(y, m)}${isLeap(y) && m <= 2 ? " (leap year!)" : ""} + date ${day} + year code ${yearCode(y)} = ${total}; mod 7 → ${total % 7} → <b>${DAYS[wd]}</b>.` };
+});
+
+/* ---- Lecture 11 ---- */
+D("sq3d", "3-digit squares", "Same slide trick, bigger numbers", () => {
+  const n = R(101, 999);
+  const d = n % 100 <= 50 ? n % 100 : n % 100 - 100;
+  const z1 = n - d, z2 = n + d;
+  return { q: `${n}²`, kind: "num", a: n * n,
+    how: `Slide ${Math.abs(d)} to ${F(z1)} and ${F(z2)}: ${F(z1)} × ${F(z2)} = <b>${F(z1 * z2)}</b>, plus ${Math.abs(d)}² = ${F(d * d)} → <b>${F(n * n)}</b>.` };
+});
+D("sq4d", "4-digit squares", "Expert level — mnemonics welcome", () => {
+  const n = R(1001, 9899);
+  const d = n % 1000 <= 500 ? n % 1000 : n % 1000 - 1000;
+  const z1 = n - d, z2 = n + d;
+  return { q: `${F(n)}²`, kind: "num", a: n * n,
+    how: `${F(z1)} × ${F(z2)} = <b>${F(z1 * z2)}</b>, plus ${Math.abs(d)}² = ${F(d * d)} → <b>${F(n * n)}</b>. Hold the middle number with a Major-system word!` };
+});
+D("cube", "2-digit cubes, exact", "z(z(z+3d) + 3d²) + d³", () => {
+  const n = R(11, 40);
+  const d = n % 10 <= 5 ? n % 10 : n % 10 - 10;
+  const z = n - d;
+  const step1 = z * (z + 3 * d) + 3 * d * d;
+  return { q: `${n}³`, kind: "num", a: n ** 3,
+    how: `z=${z}, d=${d}: ${z}×${z + 3 * d} + ${3 * d * d} = <b>${F(step1)}</b>; × ${z} = ${F(step1 * z)}; ${d >= 0 ? "+" : "−"} ${Math.abs(d ** 3)} → <b>${F(n ** 3)}</b>.` };
+});
+D("cubeest", "2-digit cubes, estimated", "Down d, down d, up 2d", () => {
+  const n = R(41, 99);
+  const d = n % 10 <= 5 ? n % 10 : n % 10 - 10;
+  const z = n - d;
+  const est = z * z * (z + 3 * d);
+  return { q: `${n}³ ≈ ?`, sub: "Within 2.5% counts as correct", kind: "dec", a: n ** 3, rtol: 0.025,
+    how: `Slide to ${z}, ${z}, ${z + 3 * d}: ${z} × ${z} × ${z + 3 * d} = <b>${F(est)}</b>. Exact: ${F(n ** 3)}.` };
+});
+D("mul3x2", "3-by-2 multiplication", "Factor, or split and distribute", () => {
+  const a = R(112, 989), b = R(12, 89);
+  const bt = Math.floor(b / 10) * 10;
+  return { q: `${a} × ${b}`, kind: "num", a: a * b,
+    how: `(${a} × ${bt}) + (${a} × ${b % 10}) = ${F(a * bt)} + ${F(a * (b % 10))} → <b>${F(a * b)}</b>. If ${b} factors into small numbers, that's usually easier.` };
+});
+
+/* ---- Lecture 12 ---- */
+D("cuberoot", "Cube roots by ear", "Perfect cubes give themselves away", () => {
+  const n = R(11, 99), c = n ** 3;
+  const lastMap = { 1: 1, 2: 8, 3: 7, 4: 4, 5: 5, 6: 6, 7: 3, 8: 2, 9: 9, 0: 0 };
+  const thousands = Math.floor(c / 1000);
+  const tens = Math.floor(n / 10);
+  return { q: `∛${F(c)}`, sub: "It's a perfect cube of a 2-digit number", kind: "num", a: n,
+    how: `${F(thousands)} thousand sits between ${tens}³=${F(tens ** 3)} and ${tens + 1}³=${F((tens + 1) ** 3)} → tens digit <b>${tens}</b>. The cube ends in ${c % 10}, and only ${lastMap[c % 10]}³ ends that way → <b>${n}</b>.` };
+});
+
+/* ---------- lessons ---------- */
+const LESSONS = [
+  { n: 1, title: "Math in Your Head!", tag: "Left to right, plus your first magic tricks",
+    cards: [
+      { h: "Calculate left to right", p: "Paper math goes right to left; mental math goes the way you read. Start with the biggest part of the number — it gives you an estimate immediately and the rest refines it. For 54 × 7: do 7 × 50 = 350 first, then 7 × 4 = 28, and add: 378." },
+      { h: "Multiply by 11 instantly", p: "For a 2-digit number, the answer starts and ends with its digits; the middle is their sum. If the sum passes 9, carry into the first digit.", ex: "23 × 11 → 2 [2+3] 3 = 253\n85 × 11 → 8 [13] 5 → carry → 935" },
+      { h: "Square numbers ending in 5", p: "Multiply the first digit by the next digit up, then attach 25.", ex: "35² → 3 × 4 = 12, attach 25 → 1,225\n305² → 30 × 31 = 930 → 93,025" },
+      { h: "Same tens, units summing to 10", p: "Like 84 × 86: first digit × next digit up, then attach the product of the units digits (as two digits).", ex: "84 × 86 → 8 × 9 = 72, 4 × 6 = 24 → 7,224" },
+      { h: "Teens are easy", p: "13 × 6 is (10 × 6) + (3 × 6). For teen × teen: add one number to the other's units digit, ×10, then add the product of the units.", ex: "13 × 14 → (13+4) × 10 = 170, +3×4 → 182" }
+    ],
+    drills: ["warmup", "mult11", "sq5", "sum10", "teens"] },
+  { n: 2, title: "Mental Addition and Subtraction", tag: "One digit at a time — and the power of complements",
+    cards: [
+      { h: "Add the big parts first", p: "62 + 24: add 20 to get 82, then 4 to get 86. Three digits work the same: hundreds, tens, units. Each step simplifies the problem." },
+      { h: "Turn hard addition into easy subtraction", p: "When adding something like 766 + 489 would carry at every step, round it: 489 = 500 − 11. Add 500, subtract 11: 1,255." },
+      { h: "Subtract by overshooting", p: "121 − 57: subtracting 60 is easy (61), then give back 3 → 64. Any subtraction that borrows can be done as an easy over-subtract plus an add-back." },
+      { h: "Complements", p: "The complement is the distance to the next round number. For 2 digits: first digit to 9, last digit to 10 (75 → 25). For 3 digits: 9, 9, 10 (234 → 766). Numbers ending in 0 keep the 0.", ex: "835 − 467 → 835 − 500 = 335, then +33 (complement of 67) → 368" },
+      { h: "Making change", p: "Change from $10, $20, or $100 is a complement in disguise: dollars sum to one less than the bill, cents sum to 100.", ex: "$23.58 from $100 → 23+76 = 99, 58+42 = 100 → $76.42" }
+    ],
+    drills: ["add2", "add3", "sub2", "sub3", "comp100", "comp1000", "change"] },
+  { n: 3, title: "Go Forth and Multiply", tag: "2-by-1 and 3-by-1: the building blocks",
+    cards: [
+      { h: "2-by-1: the fundamental skill", p: "53 × 6: do 6 × 50 = 300, hold it, add 6 × 3 = 18 → 318. The second product is always under 100, so say the first part with confidence and refine." },
+      { h: "3-by-1: keep a running total", p: "324 × 7: 7 × 300 = 2,100; add 7 × 20 = 140 → 2,240; add 7 × 4 = 28 → 2,268. Add as you go — don't store three numbers." },
+      { h: "Sometimes subtract instead", p: "59 × 7: instead of 350 + 63, do (7 × 60) − 7 = 413. When a number ends in 8 or 9, round up and subtract." },
+      { h: "The factoring method", p: "23 × 16: think 16 = 8 × 2. Then 23 × 8 = 184, and 184 × 2 = 368. Two easy problems instead of one hard one — and nothing to hold in memory.", ex: "35 × 14 = 35 × 2 × 7 = 70 × 7 = 490" }
+    ],
+    drills: ["mul2x1", "mul3x1", "factor"] },
+  { n: 4, title: "Divide and Conquer", tag: "Mental division and divisibility tests",
+    cards: [
+      { h: "Division, left to right", p: "79 ÷ 3: 3 goes into 79 twenty-some times; 3 × 20 = 60, leaving 19; 3 goes in 6 more times, remainder 1 → 26 r 1. The quotient builds itself left to right." },
+      { h: "Overshooting", p: "770 ÷ 79: 79 × 10 = 790 is too big by 20, so the answer is 9 with remainder 79 − 20 = 59. Going over on purpose is often faster than creeping up." },
+      { h: "Simplify before dividing", p: "Dividing by 5? Double both numbers: 1234 ÷ 5 = 2468 ÷ 10 = 246.8. Both numbers share a factor? Cancel it first: 2012 ÷ 24 = 503 ÷ 6." },
+      { h: "Divisibility tests", p: "By 2/4/8: check the last 1/2/3 digits. By 3 or 9: digit sum. By 6: even and digit-sum divisible by 3. By 11: alternate adding and subtracting digits. By 7: double the last digit, subtract from the rest, repeat (161 → 16 − 2 = 14 ✓)." },
+      { h: "The sevenths circle", p: "Memorize 1/7 = 0.142857… and you know them all — every k/7 cycles through the same six digits 1-4-2-8-5-7, just starting at a different point.", ex: "1/7 .142857  2/7 .285714  3/7 .428571\n4/7 .571428  5/7 .714285  6/7 .857142" }
+    ],
+    drills: ["div1", "div2", "divis", "sevenths"] },
+  { n: 5, title: "The Art of Guesstimation", tag: "Close enough, fast — sizes, doubling, roots",
+    cards: [
+      { h: "Count digits before you compute", p: "An x-digit × y-digit product has x+y or x+y−1 digits. Multiply the leading digits: 10 or more → the longer answer; 4 or less → the shorter; 5–9 → could be either. Division: the answer has (digits of a) − (digits of b) digits, or one more." },
+      { h: "Round and add", p: "Estimating a grocery bill? Round each price to the nearest half dollar as it's rung up. Errors cancel; totals land close." },
+      { h: "Rule of 70", p: "Money at r% a year doubles in about 70 ÷ r years. At 5%, about 14 years; at 10%, about 7." },
+      { h: "Square roots: divide and average", p: "To estimate √40: guess 6 (6² = 36). Divide 40 ÷ 6 ≈ 6.67. Average the two: 6.33. One round of this is usually accurate to a couple of decimal places.", ex: "√40 → guess 6 → 40÷6 = 6.67 → avg 6.33 (true: 6.32…)" }
+    ],
+    drills: ["digits", "rule70", "sqrtest"] },
+  { n: 6, title: "Mental Math and Paper", tag: "Criss-cross, casting out nines, close-together",
+    cards: [
+      { h: "Casting out nines", p: "Reduce any number to a single digit by summing digits (repeat until one digit). The reduced answer must match the reduced problem — for +, −, and ×. A mismatch proves an error; a match is strong (not certain) evidence you're right.", ex: "314 × 159 = 49,926?\n314→8, 159→6, 8×6=48→3; 49,926→30→3 ✓" },
+      { h: "Why it works", p: "A number's digit sum is its remainder when divided by 9 — so you're just checking the whole calculation modulo 9." },
+      { h: "The close-together method", p: "For numbers near a round base z: (z+a)(z+b) = (z+a+b) × z + ab. Cross-add one number with the other's distance, multiply by the base, add the product of the distances.", ex: "107 × 111 → 107+11 = 118 → 11,800 + 7×11 → 11,877\n96 × 97 → 96−3 = 93 → 9,300 + (−4)(−3) → 9,312" },
+      { h: "Criss-cross multiplication", p: "On paper you can write just the answer to a 2×2 (or bigger): units product first, then the criss-cross (outer + inner products), then the tens product — carrying as you go. Nothing else gets written down." }
+    ],
+    drills: ["digitsum", "castcheck", "close100"] },
+  { n: 7, title: "Intermediate Multiplication", tag: "Five ways to crack any 2-by-2",
+    cards: [
+      { h: "Squaring: slide to a round number", p: "13²: slide down 3 to 10 and up 3 to 16; 10 × 16 = 160, add 3² → 169. Works for any square: n² = (n−d)(n+d) + d², so slide to the nearest multiple of 10.", ex: "67² → 70 × 64 = 4,480 + 9 → 4,489" },
+      { h: "Addition method", p: "Best when a number ends in 1–4: round it down. 41 × 17 = (40 × 17) + 17 = 697." },
+      { h: "Subtraction method", p: "Best when a number ends in 7–9 or sits near 100: round it up. 97 × 22 = (100 × 22) − (3 × 22) = 2,134." },
+      { h: "Factoring method", p: "Best when a number splits into small factors — easiest on memory because every result is used immediately. 97 × 22 = 97 × 11 × 2 = 1,067 × 2 = 2,134." },
+      { h: "Which method when?", p: "Same numbers → squaring. Close together → close-together. Small factors → factor. Ends in 7–9 or near 100 → subtraction. Otherwise → addition. Choosing the easy path is the ‘math of least resistance’." }
+    ],
+    drills: ["sq2d", "addmethod", "submethod", "close2x2", "mix2x2"] },
+  { n: 8, title: "The Speed of Vedic Division", tag: "Divide by 39 as if it were 4",
+    cards: [
+      { h: "Short division by teens", p: "For divisors 11–19, do long division but keep the small remainders in your head (or as tiny superscripts), writing only the answer." },
+      { h: "The Vedic idea", p: "Dividing by 39 is hard; dividing by 40 is easy. Divide by 4 (shifting the decimal), and after each quotient digit, add that digit back into the next step — this exactly compensates for using 40 instead of 39.", ex: "13,571 ÷ 39: 4 into 13 → 3 r 1; 4 into 15+3 → 4 r 2;\n4 into 27+4 → 7 …  answer 347 r 38" },
+      { h: "When a step gives 10 or more", p: "Carry the tens digit of that quotient into the previous answer digit and keep going. At the very end, compute the remainder against the true divisor." },
+      { h: "Works best when", p: "The divisor ends in 8 or 9 (round up), just like the subtraction method for multiplication. Divisors ending in 1 or 2 have a mirror-image version that rounds down." }
+    ],
+    drills: ["shortdiv", "vedic"] },
+  { n: 9, title: "Memorizing Numbers", tag: "The Major system: turn numbers into words",
+    cards: [
+      { h: "The phonetic code", p: "Each digit gets a consonant sound; vowels (and h, w, y) are free filler. 1 = t/d, 2 = n, 3 = m, 4 = r, 5 = L, 6 = ch/sh/j, 7 = k/g, 8 = f/v, 9 = p/b, 0 = s/z. Sounds, not spelling: ‘rabbit’ has one b sound → r-b-t → 491." },
+      { h: "Memory hooks for anything", p: "Turn a date, PIN, or phone number into a vivid word or phrase — the stranger the image, the stickier it is. A whole credit card number becomes a short sentence." },
+      { h: "The peg system", p: "Fixed words for 1–10 (tea, knee, moo, ear, oil, shoe, key, foe, pie, dice) let you memorize numbered lists: to link item 7, picture it with a key. Beyond 10, the code gives a word for every number (11 = tot, 12 = tin…)." },
+      { h: "Why calculators need it", p: "In big calculations you must park a partial result while you compute another. Turning 380 into a word like ‘MOVIES’ frees your working memory — you'll use this in Lecture 11." }
+    ],
+    drills: ["w2n", "n2w", "pegs"] },
+  { n: 10, title: "Calendar Calculating", tag: "The day of the week for any date in history",
+    cards: [
+      { h: "The formula", p: "day of week = (month code + date + year code) mod 7, where Monday=1 … Saturday=6, Sunday=0 or 7." },
+      { h: "Month codes", p: "Jan 6, Feb 2, Mar 2, Apr 5, May 0, Jun 3, Jul 5, Aug 1, Sep 4, Oct 6, Nov 2, Dec 4. In leap years, Jan drops to 5 and Feb to 1.", ex: "Jan 1, 2000 (leap): 5 + 1 + 0 = 6 → Saturday" },
+      { h: "Year codes", p: "For 20xx: last two digits + (last two digits ÷ 4, ignore remainder), cast out 7s. For 19xx add 1, for 18xx add 3, for 17xx add 5, for 16xx add 0. The calendar also repeats every 28 years within a century — subtract 28s to shrink the work.", ex: "2025 → 25 + 6 = 31 → cast out 28 → 3" },
+      { h: "Leap year rules", p: "Every 4th year, except years divisible by 100 — unless divisible by 400. So 2000 was a leap year; 1900 wasn't; 2100 won't be. Dates before 1582 fall under the older Julian calendar, so this formula covers the Gregorian era." }
+    ],
+    drills: ["yearcode", "weekday"] },
+  { n: 11, title: "Advanced Multiplication", tag: "3- and 4-digit squares, cubes, 3-by-2s",
+    cards: [
+      { h: "3-digit squares", p: "Same slide trick: 108² → 100 × 116 + 8² = 11,664. For 755², ‘push together, pull apart’: 755+755 = 1,510 → split as 800 × 710, add 45² → 570,025." },
+      { h: "4-digit squares", p: "2345²: slide 345 to get 2,000 × 2,690 = 5,380,000. Park 380 as a Major-system word, square 345 the same way (119,025), recombine: 5,499,025. The mnemonic is what makes it possible." },
+      { h: "Cubes", p: "Estimate n³ by sliding down d twice and up 2d… precisely: z × z × (z+3d). For the exact value use z(z(z+3d) + 3d²) + d³ — the corrections 3d² and d³ come from a tiny fixed table.", ex: "43³ ≈ 40 × 40 × 49 = 78,400 (exact 79,507)" },
+      { h: "3-by-2 multiplication", p: "Easiest when the 2-digit number factors: 365 × 24 = 365 × 6 × 4. Or factor the 3-digit number into 2×1 pieces: 47 × 126 = 47 × 63 × 2. Last resort: split and distribute, 47 × 283 = 47 × 280 + 47 × 3." }
+    ],
+    drills: ["sq3d", "cube", "cubeest", "mul3x2", "sq4d"] },
+  { n: 12, title: "Masters of Mental Math", tag: "Cube roots, Benford's law, and the big picture",
+    cards: [
+      { h: "Cube roots by observation", p: "For a perfect cube of a 2-digit number: the thousands tell you the tens digit (bracket between consecutive cubes of 1–10), and the last digit gives the units — cubes of 1–10 all end differently.", ex: "∛54,872 → 54 is between 3³=27 and 4³=64 → 30s\nends in 2 → only 8³ ends in 2 → 38" },
+      { h: "The last-digit pattern", p: "1→1, 4→4, 5→5, 6→6, 9→9 match themselves; 2 and 8 swap; 3 and 7 swap; 0→0. That's why the units digit of the cube betrays the root." },
+      { h: "Benford's law", p: "Real-world numbers start with 1 far more often than 9 — so digit-count estimates land on the shorter answer about half the time, more than naive chance suggests." },
+      { h: "The big lesson", p: "Look at the numbers before you compute: can you factor, round, cross-add, or complement your way to an easier problem? Mental math is constant simplification — the math of least resistance." }
+    ],
+    drills: ["cuberoot", "sq3d", "vedic"] }
+];
+
+const WORKOUT_POOL = ["mult11", "sq5", "sum10", "add2", "add3", "sub3", "comp1000", "change", "mul2x1", "mul3x1", "factor", "div1", "div2", "digitsum", "close100", "sq2d", "mix2x2", "w2n", "weekday", "sq3d", "cuberoot", "teens", "close2x2"];
+
+/* ---------- state & stats ---------- */
+const $ = (s) => document.querySelector(s);
+const view = $("#view"), topbar = $("#topbar"), topTitle = $("#topTitle"), topStreak = $("#topStreak");
+let stats = {};
+try { stats = JSON.parse(localStorage.getItem("mmg-stats-v1") || "{}"); } catch (e) { stats = {}; }
+const saveStats = () => { try { localStorage.setItem("mmg-stats-v1", JSON.stringify(stats)); } catch (e) {} };
+const stat = (id) => stats[id] || (stats[id] = { ok: 0, tries: 0, best: 0 });
+
+let nav = { screen: "home" };
+let session = null;
+
+function esc(s) { return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;"); }
+
+/* ---------- home ---------- */
+function showHome() {
+  nav = { screen: "home" };
+  topbar.hidden = true;
+  const totalOk = Object.values(stats).reduce((s, x) => s + x.ok, 0);
+  const rows = LESSONS.map((L, i) => {
+    const ok = L.drills.reduce((s, d) => s + stat(d).ok, 0);
+    return `<button class="lesson-row" data-lesson="${i}">
+      <span class="num">${L.n}</span>
+      <span class="body"><p class="t">${L.title}</p><p class="d">${L.tag}</p></span>
+      <span class="prog">${ok ? ok + " ✓" : ""}</span></button>`;
+  }).join("");
+  view.innerHTML = `
+    <h1>Mental Math Gym</h1>
+    <p class="sub">Lightning-calculation techniques, one lecture at a time — with unlimited practice problems. ${totalOk ? `<b>${F(totalOk)}</b> solved so far.` : "Start with Lecture 1."}</p>
+    <button class="lesson-row workout" data-workout="1">
+      <span class="num">⚡</span>
+      <span class="body"><p class="t">Daily Workout</p><p class="d">A random mix from every technique you've met</p></span>
+      <span class="prog"></span></button>
+    <p class="kicker">The Twelve Lectures</p>
+    ${rows}
+    <p class="note">A study companion to Arthur Benjamin's Great Courses series <i>The Secrets of Mental Math</i>. Watch each lecture, read the recap here, then drill until it's reflex. Explanations are original; progress is stored only on this device.</p>`;
+  view.querySelectorAll("[data-lesson]").forEach(b => b.addEventListener("click", () => showLesson(+b.dataset.lesson)));
+  view.querySelector("[data-workout]").addEventListener("click", () => startDrill(null, { workout: true, backTo: "home" }));
+}
+
+/* ---------- lesson ---------- */
+function showLesson(i) {
+  nav = { screen: "lesson", lesson: i };
+  const L = LESSONS[i];
+  topbar.hidden = false; topTitle.textContent = `Lecture ${L.n} · ${L.title}`; topStreak.textContent = "";
+  const cards = L.cards.map(c => `<div class="tech"><h3>${c.h}</h3><p>${c.p}</p>${c.ex ? `<div class="ex">${esc(c.ex).replace(/\n/g, "<br>")}</div>` : ""}</div>`).join("");
+  const drills = L.drills.map(id => {
+    const d = DRILLS[id], s = stat(id);
+    return `<button class="drill-row" data-drill="${id}">
+      <span class="body"><p class="t">${d.name}</p><p class="d">${d.desc}</p></span>
+      <span class="prog">${s.ok ? s.ok + " ✓" : ""}</span><span class="go">→</span></button>`;
+  }).join("");
+  view.innerHTML = `${cards}<p class="kicker">Drills</p>${drills}`;
+  view.querySelectorAll("[data-drill]").forEach(b => b.addEventListener("click", () => startDrill(b.dataset.drill, { backTo: "lesson", lesson: i })));
+  window.scrollTo(0, 0);
+}
+
+/* ---------- drill ---------- */
+function startDrill(drillId, opts) {
+  session = { drillId, workout: !!opts.workout, backTo: opts.backTo, lesson: opts.lesson, streak: 0, solved: 0, tries: 0 };
+  nav = { screen: "drill" };
+  nextProblem();
+}
+
+function currentDrill() {
+  return session.workout ? DRILLS[pick(WORKOUT_POOL)] : DRILLS[session.drillId];
+}
+
+function nextProblem() {
+  const d = currentDrill();
+  session.currentId = d.id;
+  session.item = d.gen();
+  session.graded = false;
+  renderProblem(d);
+}
+
+function renderProblem(d) {
+  const it = session.item, s = stat(d.id);
+  topbar.hidden = false;
+  topTitle.textContent = session.workout ? "⚡ Daily Workout" : d.name;
+  topStreak.textContent = session.streak > 1 ? `🔥 ${session.streak}` : "";
+  const acc = session.tries ? Math.round(100 * session.solved / session.tries) : null;
+  let inputHtml = "";
+  if (it.kind === "mc") {
+    inputHtml = `<div class="choices ${it.wideChoices ? "wide" : ""}">` +
+      it.choices.map(c => `<button data-choice="${esc(c)}">${esc(c)}</button>`).join("") + `</div>`;
+  } else if (it.kind === "rem") {
+    inputHtml = `<div class="answer-zone">
+        <input class="ans small" id="ansQ" inputmode="numeric" autocomplete="off" placeholder="quot.">
+        <span class="rlabel">r</span>
+        <input class="ans small" id="ansR" inputmode="numeric" autocomplete="off" placeholder="rem.">
+      </div><div class="btnrow"><button class="btn" id="checkBtn">Check</button><button class="btn ghost" id="skipBtn">Show me</button></div>`;
+  } else {
+    inputHtml = `<div class="answer-zone">
+        <input class="ans" id="ansQ" inputmode="${it.kind === "dec" ? "decimal" : "numeric"}" autocomplete="off" placeholder="?">
+      </div><div class="btnrow"><button class="btn" id="checkBtn">Check</button><button class="btn ghost" id="skipBtn">Show me</button></div>`;
+  }
+  view.innerHTML = `
+    <div class="statbar">
+      <div class="chip"><span class="v">${session.streak}</span><span class="l">Streak</span></div>
+      <div class="chip"><span class="v">${session.solved}</span><span class="l">This run</span></div>
+      <div class="chip"><span class="v">${acc === null ? "–" : acc + "%"}</span><span class="l">Accuracy</span></div>
+      <div class="chip"><span class="v">${F(s.ok)}</span><span class="l">All time</span></div>
+    </div>
+    <div class="problem">${it.q}</div>
+    <p class="pq">${it.sub || " "}</p>
+    ${inputHtml}
+    <div id="fbzone"></div>`;
+  if (it.kind === "mc") {
+    view.querySelectorAll("[data-choice]").forEach(b => b.addEventListener("click", () => gradeMC(b)));
+  } else {
+    $("#checkBtn").addEventListener("click", grade);
+    $("#skipBtn").addEventListener("click", reveal);
+    const q = $("#ansQ"); q.focus();
+    view.querySelectorAll("input.ans").forEach(inp => inp.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") { e.preventDefault(); if (it.kind === "rem" && inp.id === "ansQ" && $("#ansR").value === "") $("#ansR").focus(); else grade(); }
+    }));
+  }
+  window.scrollTo(0, 0);
+}
+
+function parseNum(v) {
+  v = String(v).trim().replace(/[$\s]/g, "");
+  if (/,\d{1,2}$/.test(v) && !v.includes(".")) v = v.replace(",", ".");
+  v = v.replace(/,/g, "");
+  if (v === "" || isNaN(+v)) return null;
+  return +v;
+}
+
+function grade() {
+  if (session.graded) return;
+  const it = session.item;
+  let correct = false, given = "";
+  if (it.kind === "rem") {
+    const q = parseNum($("#ansQ").value), r = parseNum($("#ansR").value);
+    if (q === null || r === null) { $("#ansQ").focus(); return; }
+    given = `${q} r ${r}`;
+    correct = q === it.a && r === it.a2;
+  } else {
+    const v = parseNum($("#ansQ").value);
+    if (v === null) { $("#ansQ").focus(); return; }
+    given = String(v);
+    const tol = it.tol !== undefined ? it.tol : (it.rtol !== undefined ? it.rtol * Math.abs(it.a) : 0.0001);
+    correct = Math.abs(v - it.a) <= tol;
+  }
+  finishGrade(correct, given);
+}
+
+function gradeMC(btn) {
+  if (session.graded) return;
+  const it = session.item;
+  const correct = btn.dataset.choice === String(it.a);
+  btn.classList.add(correct ? "hit" : "miss");
+  view.querySelectorAll("[data-choice]").forEach(b => {
+    if (b.dataset.choice === String(it.a)) b.classList.add("hit");
+    b.disabled = true;
+  });
+  finishGrade(correct, btn.dataset.choice);
+}
+
+function answerText(it) {
+  if (it.kind === "rem") return `${F(it.a)} r ${it.a2}`;
+  if (it.kind === "mc") return String(it.a);
+  if (it.kind === "dec" && !Number.isInteger(it.a)) return (+it.a.toFixed(3)).toString();
+  return F(it.a);
+}
+
+function finishGrade(correct, given) {
+  session.graded = true;
+  session.tries++;
+  const s = stat(session.currentId);
+  s.tries++;
+  if (correct) { session.solved++; session.streak++; s.ok++; if (session.streak > s.best) s.best = session.streak; }
+  else session.streak = 0;
+  saveStats();
+  showFeedback(correct, correct ? pick(["Correct!", "Nailed it!", "Yes!", "Lightning!"]) : "Not quite — it's " + answerText(session.item) + ".");
+}
+
+function reveal() {
+  if (session.graded) return;
+  session.graded = true;
+  session.tries++;
+  const s = stat(session.currentId); s.tries++;
+  session.streak = 0;
+  saveStats();
+  showFeedback(null, `Answer: ${answerText(session.item)}`);
+}
+
+function showFeedback(correct, verdict) {
+  topStreak.textContent = session.streak > 1 ? `🔥 ${session.streak}` : "";
+  $("#fbzone").innerHTML = `
+    <div class="fb ${correct ? "good" : "bad"}">
+      <span class="verdict">${verdict}</span>
+      <span class="how">${session.item.how || ""}</span>
+    </div>
+    <div class="btnrow"><button class="btn" id="nextBtn">Next problem →</button></div>`;
+  const nb = $("#nextBtn");
+  nb.addEventListener("click", nextProblem);
+  nb.focus();
+}
+
+/* ---------- navigation ---------- */
+$("#backBtn").addEventListener("click", () => {
+  if (nav.screen === "drill" && session && session.backTo === "lesson") showLesson(session.lesson);
+  else showHome();
+});
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Enter" && nav.screen === "drill" && session && session.graded) {
+    const nb = $("#nextBtn"); if (nb && document.activeElement !== nb) { e.preventDefault(); nextProblem(); }
+  }
+});
+
+showHome();
+
+</script>
+</body>
+</html>
