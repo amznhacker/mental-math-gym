@@ -11,10 +11,10 @@ locally on your device (nothing is uploaded anywhere).
 - Multiply by 11, squares ending in 5, complements, making change
 - 2×1 / 3×1 / 2×2 / 3×2 multiplication (addition, subtraction, factoring, close-together methods)
 - Mental division, divisibility tests, Vedic division
-- Guesstimation: digit counts, Rule of 70, square roots by divide-and-average
+- Guesstimation: digit counts (× and ÷), grocery-bill rounding, sales tax, Rule of 70, square roots by divide-and-average
 - Casting out nines, the Major memory system, peg words
 - Calendar calculating (day of the week for any date, 1600–2099)
-- 3- and 4-digit squares, cubes, cube roots
+- 3- and 4-digit squares, cubes, 4th powers, cube roots
 
 Everything is a single `index.html` — no build step, no dependencies, works offline
 once loaded.
@@ -28,7 +28,10 @@ once loaded.
   shows which facts are automatic (<1.5 s) and which still steal working memory. Slow facts —
   not unknown ones — are the usual bottleneck in mental calculation.
 - **Spacing + interleaving** — the *Daily Workout* weights drill selection by your error rate
-  and how long since you last practiced each technique, so fading skills resurface.
+  and how long since you last practiced each technique, and lessons show a **review** badge
+  when a practiced skill comes due (sooner if your accuracy was low).
+- **Desirable difficulty** — drills level up (Lv 2, Lv 3) as your accuracy and volume grow,
+  widening the problem ranges so practice stays just past comfortable.
 
 ## Deploy on GitHub Pages (free)
 

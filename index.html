@@ -110,6 +110,8 @@ h1{font:700 34px/1.1 var(--serif);margin:26px 0 6px;letter-spacing:-.01em;text-w
 .drill-row .t{font:650 14.5px var(--sans);margin:0 0 1px}
 .drill-row .d{font-size:12.5px;color:var(--muted);margin:0}
 .drill-row .prog{font:600 12px var(--mono);color:var(--muted)}
+.prog.due{color:var(--accent-strong);font-weight:700}
+.drill-row .lv{font:600 10.5px var(--mono);color:var(--accent-strong);background:var(--accent-soft);border-radius:5px;padding:1px 5px;vertical-align:1px}
 .statbar{
   display:flex;gap:8px;margin-bottom:16px;font-variant-numeric:tabular-nums;
 }
@@ -219,8 +221,8 @@ D("warmup", "Left-to-right warm-ups", "Easy sums and ×10s you can say instantly
   return { q: `${a} × ${F(m)}`, kind: "num", a: a * m,
     how: `Attach ${String(m).length - 1} zero${m > 10 ? "s" : ""}: <b>${F(a * m)}</b>.` };
 });
-D("mult11", "Multiply by 11", "The classic: spread the digits, insert the sum", () => {
-  const hard = Math.random() < 0.3;
+D("mult11", "Multiply by 11", "The classic: spread the digits, insert the sum", (lvl = 1) => {
+  const hard = Math.random() < [0.25, 0.5, 0.8][lvl - 1];
   if (!hard) {
     const n = R(12, 98), t = Math.floor(n / 10), u = n % 10, s = t + u;
     return { q: `${n} × 11`, kind: "num", a: n * 11,
@@ -232,11 +234,11 @@ D("mult11", "Multiply by 11", "The classic: spread the digits, insert the sum", 
   return { q: `${n} × 11`, kind: "num", a: n * 11,
     how: `Keep the ends, insert neighbor sums: ${d[0]}+${d[1]}=<b>${d[0] + d[1]}</b> and ${d[1]}+${d[2]}=<b>${d[1] + d[2]}</b> (carry if needed) → <b>${F(n * 11)}</b>.` };
 });
-D("sq5", "Squares ending in 5", "First digit × next digit, attach 25", () => {
-  const n = Math.random() < 0.7 ? R(1, 9) * 10 + 5 : R(10, 19) * 10 + 5;
+D("sq5", "Squares ending in 5", "First digit × next digit, attach 25", (lvl = 1) => {
+  const n = Math.random() < 0.7 ? R(1, 9) * 10 + 5 : R(10, lvl >= 3 ? 100 : lvl === 2 ? 60 : 19) * 10 + 5;
   const h = Math.floor(n / 10);
-  return { q: `${n}²`, kind: "num", a: n * n,
-    how: `${h} × ${h + 1} = <b>${h * (h + 1)}</b>, attach 25 → <b>${F(n * n)}</b>.` };
+  return { q: `${F(n)}²`, kind: "num", a: n * n,
+    how: `${h} × ${h + 1} = <b>${F(h * (h + 1))}</b>, attach 25 → <b>${F(n * n)}</b>. Works at any size: the part before the 5 times its next neighbor.` };
 });
 D("sum10", "Same tens, units sum to 10", "Like 84 × 86 — cousins of the 5² trick", () => {
   const t = R(2, 9), u = R(1, 9), a = t * 10 + u, b = t * 10 + (10 - u);
@@ -357,14 +359,14 @@ D("change", "Making change", "Dollars to one less, cents to 100", () => {
 });
 
 /* ---- Lecture 3 ---- */
-D("mul2x1", "2-by-1 multiplication", "The building block of everything", () => {
-  const a = R(21, 99), b = R(3, 9);
+D("mul2x1", "2-by-1 multiplication", "The building block of everything", (lvl = 1) => {
+  const a = R(21, lvl === 1 ? 59 : 99), b = R(3, 9);
   const t = Math.floor(a / 10) * 10, u = a % 10;
   return { q: `${a} × ${b}`, kind: "num", a: a * b,
     how: `${b} × ${t} = <b>${b * t}</b>, plus ${b} × ${u} = <b>${b * u}</b> → <b>${F(a * b)}</b>.` };
 });
-D("mul3x1", "3-by-1 multiplication", "Left to right, adding as you go", () => {
-  const a = R(212, 989), b = R(3, 9);
+D("mul3x1", "3-by-1 multiplication", "Left to right, adding as you go", (lvl = 1) => {
+  const a = R(212, lvl === 1 ? 499 : 989), b = R(3, 9);
   const h = Math.floor(a / 100) * 100, t = Math.floor((a % 100) / 10) * 10, u = a % 10;
   return { q: `${a} × ${b}`, kind: "num", a: a * b,
     how: `${b} × ${h} = <b>${F(b * h)}</b>, + ${b} × ${t} = <b>${F(b * t)}</b> (running: ${F(b * (h + t))}), + ${b} × ${u} = <b>${b * u}</b> → <b>${F(a * b)}</b>.` };
@@ -384,24 +386,28 @@ D("div1", "1-digit division", "Quotient builds left to right", () => {
   return { q: `${n} ÷ ${d}`, sub: "Give quotient and remainder", kind: "rem", a: q, a2: r,
     how: `${d} × ${tens} = ${d * tens}, leaving ${n - d * tens}; ${d} goes in ${q - tens} more time${q - tens === 1 ? "" : "s"} → <b>${q} r ${r}</b>.` };
 });
-D("div2", "2-digit division", "Your 2-by-1 multiplication pays off", () => {
-  const d = R(12, 79), n = R(d * 3 + 1, 999);
+D("div2", "2-digit division", "Your 2-by-1 multiplication pays off", (lvl = 1) => {
+  const d = R(12, lvl === 1 ? 29 : lvl === 2 ? 59 : 79), n = R(d * 3 + 1, 999);
   const q = Math.floor(n / d), r = n % d;
   return { q: `${n} ÷ ${d}`, sub: "Give quotient and remainder", kind: "rem", a: q, a2: r,
     how: `${d} × ${q} = <b>${F(d * q)}</b>, and ${n} − ${F(d * q)} = <b>${r}</b> → ${q} r ${r}. (Overshoot and back off if your first guess is too big.)` };
 });
 D("divis", "Divisibility tests", "Spot factors without dividing", () => {
-  const k = pick([3, 4, 6, 8, 9, 11]);
+  const k = pick([3, 4, 5, 6, 7, 8, 9, 11, 12]);
   const yes = Math.random() < 0.5;
   let n = R(120, 9800);
   if (yes) { n = n - (n % k); } else if (n % k === 0) { n = n + R(1, k - 1); }
+  const head = Math.floor(n / 10), tail = n % 10, step7 = head - 2 * tail;
   const rules = {
     3: `digit sum ${sumDigitsOnce(n)} ${sumDigitsOnce(n) % 3 === 0 ? "is" : "is not"} a multiple of 3`,
     9: `digit sum ${sumDigitsOnce(n)} ${sumDigitsOnce(n) % 9 === 0 ? "is" : "is not"} a multiple of 9`,
     4: `last two digits ${String(n).slice(-2)} ${n % 4 === 0 ? "are" : "are not"} a multiple of 4`,
+    5: `last digit is ${tail} — ${n % 5 === 0 ? "" : "not "}a 0 or 5`,
+    7: `double the last digit and subtract: ${head} − ${2 * tail} = ${step7}, which ${step7 % 7 === 0 ? "is" : "is not"} a multiple of 7 (repeat if it's still big)`,
     8: `last three digits ${String(n).slice(-3)} ${n % 8 === 0 ? "are" : "are not"} a multiple of 8`,
     6: `it ${n % 2 === 0 ? "is" : "is not"} even and digit sum ${sumDigitsOnce(n)} ${sumDigitsOnce(n) % 3 === 0 ? "is" : "is not"} a multiple of 3`,
-    11: `alternating digit sum is ${String(n).split("").reduce((s, c, i) => s + (i % 2 ? -1 : 1) * (+c), 0)}, ${n % 11 === 0 ? "" : "not "}a multiple of 11`
+    11: `alternating digit sum is ${String(n).split("").reduce((s, c, i) => s + (i % 2 ? -1 : 1) * (+c), 0)}, ${n % 11 === 0 ? "" : "not "}a multiple of 11`,
+    12: `needs 3 and 4: digit sum ${sumDigitsOnce(n)} ${sumDigitsOnce(n) % 3 === 0 ? "passes" : "fails"} the 3-test; last two digits ${String(n).slice(-2)} ${n % 4 === 0 ? "pass" : "fail"} the 4-test`
   };
   return { q: `Is ${F(n)} divisible by ${k}?`, kind: "mc", choices: ["Yes", "No"], a: n % k === 0 ? "Yes" : "No",
     how: `Test for ${k}: ${rules[k]} → <b>${n % k === 0 ? "divisible" : "not divisible"}</b>.` };
@@ -419,13 +425,44 @@ D("sevenths", "The sevenths circle", "One cycle to rule them all: 142857", () =>
 
 /* ---- Lecture 5 ---- */
 D("digits", "How many digits?", "Size up an answer before computing", () => {
-  const da = R(2, 4), db = R(2, 3);
+  if (Math.random() < 0.55) {
+    const da = R(2, 4), db = R(2, 3);
+    const a = R(10 ** (da - 1), 10 ** da - 1), b = R(10 ** (db - 1), 10 ** db - 1);
+    const len = String(a * b).length;
+    const lead = (+String(a)[0]) * (+String(b)[0]);
+    return { q: `${F(a)} × ${F(b)}`, sub: "How many digits will the answer have?", kind: "mc",
+      choices: [String(da + db - 1), String(da + db)], a: String(len),
+      how: `${da}-digit × ${db}-digit gives ${da + db} or ${da + db - 1} digits. Leading digits ${String(a)[0]} × ${String(b)[0]} = ${lead}: ${lead >= 10 ? "≥ 10, so the longer one" : lead <= 4 ? "≤ 4, so the shorter one" : "5–9 — could go either way"}. Exact: ${F(a * b)} → <b>${len} digits</b>.` };
+  }
+  const da = R(3, 5), db = R(2, da - 1);
   const a = R(10 ** (da - 1), 10 ** da - 1), b = R(10 ** (db - 1), 10 ** db - 1);
-  const len = String(a * b).length;
-  const lead = (+String(a)[0]) * (+String(b)[0]);
-  return { q: `${F(a)} × ${F(b)}`, sub: "How many digits will the answer have?", kind: "mc",
-    choices: [String(da + db - 1), String(da + db)], a: String(len),
-    how: `${da}-digit × ${db}-digit gives ${da + db} or ${da + db - 1} digits. Leading digits ${String(a)[0]} × ${String(b)[0]} = ${lead}: ${lead >= 10 ? "≥ 10, so the longer one" : lead <= 4 ? "≤ 4, so the shorter one" : "5–9 — could go either way"}. Exact: ${F(a * b)} → <b>${len} digits</b>.` };
+  const len = String(Math.floor(a / b)).length;
+  const la = +String(a)[0], lb = +String(b)[0];
+  return { q: `${F(a)} ÷ ${F(b)}`, sub: "How many digits before any decimal point?", kind: "mc",
+    choices: [String(da - db), String(da - db + 1)], a: String(len),
+    how: `${da}-digit ÷ ${db}-digit gives ${da - db} or ${da - db + 1} digits. Compare leading digits ${la} vs ${lb}: ${la > lb ? "top is bigger → the longer answer" : la < lb ? "top is smaller → the shorter answer" : "equal — compare the next digits"}. Exact: ${F(Math.floor(a / b))} → <b>${len} digits</b>.` };
+});
+D("grocery", "Grocery-bill estimate", "Round each item to the nearest 50¢, keep a running total", () => {
+  const k = R(4, 6), items = [];
+  let sum = 0, rsum = 0;
+  for (let i = 0; i < k; i++) {
+    const p = R(20, 699) / 100;
+    items.push(p); sum += p; rsum += Math.round(p * 2) / 2;
+  }
+  sum = +sum.toFixed(2); rsum = +rsum.toFixed(2);
+  return { q: `<span style="font-size:.62em;line-height:1.55;display:inline-block">${items.map(p => "$" + p.toFixed(2)).join("<br>")}</span>`,
+    sub: "Estimate the total — within $1.00 counts", kind: "dec", a: sum, tol: 1.0,
+    how: `Rounded to half-dollars: ${items.map(p => (Math.round(p * 2) / 2).toFixed(2)).join(" + ")} = <b>$${rsum.toFixed(2)}</b>. True total: $${sum.toFixed(2)} — the rounding errors mostly cancel.` };
+});
+D("salestax", "Sales tax estimates", "A tax rate is just an easy multiplication", (lvl = 1) => {
+  const price = R(2, 95) * 100;
+  const r = pick(lvl >= 2 ? [3, 4, 5, 6, 7, 8, 9, 4.5, 6.5, 8.5] : [3, 4, 5, 6, 7, 8, 9]);
+  const ans = +(price * r / 100).toFixed(2);
+  const whole = Math.floor(r);
+  return { q: `${r}% tax on $${F(price)}`, sub: "Exact tax in dollars", kind: "dec", a: ans, tol: 0.01,
+    how: r === whole
+      ? `1% of $${F(price)} is ${F(price / 100)}, so ${whole}% is ${whole} × ${F(price / 100)} → <b>$${F(ans)}</b>.`
+      : `${whole}% first: ${whole} × ${F(price / 100)} = <b>${F(price * whole / 100)}</b>; the extra ½% is half of 1% → +${F(price / 200)} → <b>$${F(ans)}</b>.` };
 });
 D("rule70", "Rule of 70", "Years for money to double", () => {
   const r = pick([1, 2, 5, 7, 10, 14]);
@@ -457,8 +494,9 @@ D("castcheck", "Check by casting out nines", "Catch calculation errors fast", ()
     choices: ["Consistent", "Inconsistent"], a: ok ? "Consistent" : "Inconsistent",
     how: `${a}→<b>${digitSum(a)}</b>, ${b}→<b>${digitSum(b)}</b>; product of those reduces to <b>${digitSum(digitSum(a) * digitSum(b))}</b>. The stated answer reduces to <b>${digitSum(p)}</b> → ${ok ? "match (consistent — though a match doesn't guarantee correctness)" : "no match: definitely wrong"}.` };
 });
-D("close100", "Close-together, near 100", "107 × 111 in two seconds", () => {
-  const a = R(96, 112), b = R(96, 112);
+D("close100", "Close-together, near 100", "107 × 111 in two seconds", (lvl = 1) => {
+  const lo = lvl >= 3 ? 88 : 96, hi = lvl === 1 ? 107 : lvl === 2 ? 112 : 115;
+  const a = R(lo, hi), b = R(lo, hi);
   const da = a - 100, db = b - 100;
   const head = a + db, tail = da * db;
   return { q: `${a} × ${b}`, kind: "num", a: a * b,
@@ -503,11 +541,15 @@ D("shortdiv", "Short division by teens", "÷11 to ÷19 with a running remainder"
   return { q: `${F(n)} ÷ ${d}`, sub: "Quotient and remainder (paper allowed!)", kind: "rem", a: q, a2: r,
     how: `${d} × ${F(q)} = ${F(d * q)}; ${F(n)} − ${F(d * q)} = <b>${r}</b> → ${F(q)} r ${r}.` };
 });
-D("vedic", "Vedic division", "Divide by 29 as easily as by 3", () => {
-  const d = pick([19, 29, 39, 49, 59, 79, 89]), n = R(10000, 99999);
+D("vedic", "Vedic division", "Divide by 29 as easily as by 3", (lvl = 1) => {
+  const up = [19, 29, 39, 49, 59, 79, 89], down = [21, 31, 41, 51, 61, 71, 81, 91];
+  const d = pick(lvl >= 2 ? up.concat(down) : up);
+  const n = R(10000, 99999);
   const q = Math.floor(n / d), r = n % d;
   return { q: `${F(n)} ÷ ${d}`, sub: "Quotient and remainder — try the Vedic method on paper", kind: "rem", a: q, a2: r,
-    how: `Divide by ${(d + 1) / 10} instead of ${d}, adding each quotient digit back in as you go (that compensates for using ${d + 1} instead of ${d}). Answer: <b>${F(q)} r ${r}</b>.` };
+    how: d % 10 === 9
+      ? `Divide by ${(d + 1) / 10} instead of ${d}, adding each quotient digit back in as you go (that compensates for using ${d + 1} instead of ${d}). Answer: <b>${F(q)} r ${r}</b>.`
+      : `Mirror version: divide by ${(d - 1) / 10} instead of ${d}, subtracting each quotient digit from the next step (that compensates for using ${d - 1} instead of ${d}). Answer: <b>${F(q)} r ${r}</b>.` };
 });
 
 /* ---- Lecture 9 ---- */
@@ -563,8 +605,8 @@ D("weekday", "Day of the week", "month code + date + year code, mod 7", () => {
 });
 
 /* ---- Lecture 11 ---- */
-D("sq3d", "3-digit squares", "Same slide trick, bigger numbers", () => {
-  const n = R(101, 999);
+D("sq3d", "3-digit squares", "Same slide trick, bigger numbers", (lvl = 1) => {
+  const n = R(101, lvl === 1 ? 399 : lvl === 2 ? 699 : 999);
   const d = n % 100 <= 50 ? n % 100 : n % 100 - 100;
   const z1 = n - d, z2 = n + d;
   return { q: `${n}²`, kind: "num", a: n * n,
@@ -593,11 +635,17 @@ D("cubeest", "2-digit cubes, estimated", "Down d, down d, up 2d", () => {
   return { q: `${n}³ ≈ ?`, sub: "Within 2.5% counts as correct", kind: "dec", a: n ** 3, rtol: 0.025,
     how: `Slide to ${z}, ${z}, ${z + 3 * d}: ${z} × ${z} × ${z + 3 * d} = <b>${F(est)}</b>. Exact: ${F(n ** 3)}.` };
 });
-D("mul3x2", "3-by-2 multiplication", "Factor, or split and distribute", () => {
-  const a = R(112, 989), b = R(12, 89);
+D("mul3x2", "3-by-2 multiplication", "Factor, or split and distribute", (lvl = 1) => {
+  const a = R(112, 989), b = R(12, lvl === 1 ? 39 : 89);
   const bt = Math.floor(b / 10) * 10;
   return { q: `${a} × ${b}`, kind: "num", a: a * b,
     how: `(${a} × ${bt}) + (${a} × ${b % 10}) = ${F(a * bt)} + ${F(a * (b % 10))} → <b>${F(a * b)}</b>. If ${b} factors into small numbers, that's usually easier.` };
+});
+D("pow4", "4th powers", "Square, then square again", (lvl = 1) => {
+  const n = R(11, lvl >= 3 ? 40 : lvl === 2 ? 30 : 20);
+  const s = n * n;
+  return { q: `${n}⁴`, kind: "num", a: s * s,
+    how: `${n}² = <b>${F(s)}</b>; then square that with the slide trick: ${F(s)}² → <b>${F(s * s)}</b>. Park the first square as a Major-system word if you need to.` };
 });
 
 /* ---- Lecture 12 ---- */
@@ -643,7 +691,7 @@ const LESSONS = [
       { h: "Division, left to right", p: "79 ÷ 3: 3 goes into 79 twenty-some times; 3 × 20 = 60, leaving 19; 3 goes in 6 more times, remainder 1 → 26 r 1. The quotient builds itself left to right." },
       { h: "Overshooting", p: "770 ÷ 79: 79 × 10 = 790 is too big by 20, so the answer is 9 with remainder 79 − 20 = 59. Going over on purpose is often faster than creeping up." },
       { h: "Simplify before dividing", p: "Dividing by 5? Double both numbers: 1234 ÷ 5 = 2468 ÷ 10 = 246.8. Both numbers share a factor? Cancel it first: 2012 ÷ 24 = 503 ÷ 6." },
-      { h: "Divisibility tests", p: "By 2/4/8: check the last 1/2/3 digits. By 3 or 9: digit sum. By 6: even and digit-sum divisible by 3. By 11: alternate adding and subtracting digits. By 7: double the last digit, subtract from the rest, repeat (161 → 16 − 2 = 14 ✓)." },
+      { h: "Divisibility tests", p: "By 2/4/8: check the last 1/2/3 digits. By 5 or 10: last digit. By 3 or 9: digit sum. By 6: even and digit-sum divisible by 3. By 12: pass both the 3-test and the 4-test. By 11: alternate adding and subtracting digits. By 7: double the last digit, subtract from the rest, repeat (161 → 16 − 2 = 14 ✓)." },
       { h: "The sevenths circle", p: "Memorize 1/7 = 0.142857… and you know them all — every k/7 cycles through the same six digits 1-4-2-8-5-7, just starting at a different point.", ex: "1/7 .142857  2/7 .285714  3/7 .428571\n4/7 .571428  5/7 .714285  6/7 .857142" }
     ],
     drills: ["div1", "div2", "divis", "sevenths"] },
@@ -651,10 +699,11 @@ const LESSONS = [
     cards: [
       { h: "Count digits before you compute", p: "An x-digit × y-digit product has x+y or x+y−1 digits. Multiply the leading digits: 10 or more → the longer answer; 4 or less → the shorter; 5–9 → could be either. Division: the answer has (digits of a) − (digits of b) digits, or one more." },
       { h: "Round and add", p: "Estimating a grocery bill? Round each price to the nearest half dollar as it's rung up. Errors cancel; totals land close." },
+      { h: "Sales tax without fear", p: "1% is just the price with the decimal moved two places — so 6% tax is that number times 6. For half-percent rates like 6.5%, add half of the 1% on top.", ex: "6% of $23,400 → 1% = 234 → ×6 = $1,404\n6.5% → add 234 ÷ 2 → $1,521" },
       { h: "Rule of 70", p: "Money at r% a year doubles in about 70 ÷ r years. At 5%, about 14 years; at 10%, about 7." },
       { h: "Square roots: divide and average", p: "To estimate √40: guess 6 (6² = 36). Divide 40 ÷ 6 ≈ 6.67. Average the two: 6.33. One round of this is usually accurate to a couple of decimal places.", ex: "√40 → guess 6 → 40÷6 = 6.67 → avg 6.33 (true: 6.32…)" }
     ],
-    drills: ["digits", "rule70", "sqrtest"] },
+    drills: ["digits", "grocery", "salestax", "rule70", "sqrtest"] },
   { n: 6, title: "Mental Math and Paper", tag: "Criss-cross, casting out nines, close-together",
     cards: [
       { h: "Casting out nines", p: "Reduce any number to a single digit by summing digits (repeat until one digit). The reduced answer must match the reduced problem — for +, −, and ×. A mismatch proves an error; a match is strong (not certain) evidence you're right.", ex: "314 × 159 = 49,926?\n314→8, 159→6, 8×6=48→3; 49,926→30→3 ✓" },
@@ -701,9 +750,10 @@ const LESSONS = [
       { h: "3-digit squares", p: "Same slide trick: 108² → 100 × 116 + 8² = 11,664. For 755², ‘push together, pull apart’: 755+755 = 1,510 → split as 800 × 710, add 45² → 570,025." },
       { h: "4-digit squares", p: "2345²: slide 345 to get 2,000 × 2,690 = 5,380,000. Park 380 as a Major-system word, square 345 the same way (119,025), recombine: 5,499,025. The mnemonic is what makes it possible." },
       { h: "Cubes", p: "Estimate n³ by sliding down d twice and up 2d… precisely: z × z × (z+3d). For the exact value use z(z(z+3d) + 3d²) + d³ — the corrections 3d² and d³ come from a tiny fixed table.", ex: "43³ ≈ 40 × 40 × 49 = 78,400 (exact 79,507)" },
+      { h: "4th powers for free", p: "n⁴ is just n² squared: turn 2-digit numbers into a 2-digit square followed by a 3- or 4-digit square — both skills you already have." },
       { h: "3-by-2 multiplication", p: "Easiest when the 2-digit number factors: 365 × 24 = 365 × 6 × 4. Or factor the 3-digit number into 2×1 pieces: 47 × 126 = 47 × 63 × 2. Last resort: split and distribute, 47 × 283 = 47 × 280 + 47 × 3." }
     ],
-    drills: ["sq3d", "cube", "cubeest", "mul3x2", "sq4d"] },
+    drills: ["sq3d", "cube", "cubeest", "mul3x2", "pow4", "sq4d"] },
   { n: 12, title: "Masters of Mental Math", tag: "Cube roots, Benford's law, and the big picture",
     cards: [
       { h: "Cube roots by observation", p: "For a perfect cube of a 2-digit number: the thousands tell you the tens digit (bracket between consecutive cubes of 1–10), and the last digit gives the units — cubes of 1–10 all end differently.", ex: "∛54,872 → 54 is between 3³=27 and 4³=64 → 30s\nends in 2 → only 8³ ends in 2 → 38" },
@@ -714,7 +764,7 @@ const LESSONS = [
     drills: ["cuberoot", "sq3d", "vedic"] }
 ];
 
-const WORKOUT_POOL = ["ttsprint", "mult11", "sq5", "sum10", "add2", "add3", "sub3", "comp1000", "change", "mul2x1", "mul3x1", "factor", "div1", "div2", "digitsum", "close100", "sq2d", "mix2x2", "w2n", "weekday", "sq3d", "cuberoot", "teens", "close2x2"];
+const WORKOUT_POOL = ["ttsprint", "mult11", "sq5", "sum10", "add2", "add3", "sub3", "comp1000", "change", "mul2x1", "mul3x1", "factor", "div1", "div2", "digitsum", "close100", "sq2d", "mix2x2", "w2n", "weekday", "sq3d", "cuberoot", "teens", "close2x2", "salestax", "pow4", "divis"];
 
 /* ---------- state & stats ---------- */
 const $ = (s) => document.querySelector(s);
@@ -723,6 +773,24 @@ let stats = {};
 try { stats = JSON.parse(localStorage.getItem("mmg-stats-v1") || "{}"); } catch (e) { stats = {}; }
 const saveStats = () => { try { localStorage.setItem("mmg-stats-v1", JSON.stringify(stats)); } catch (e) {} };
 const stat = (id) => stats[id] || (stats[id] = { ok: 0, tries: 0, best: 0 });
+
+/* difficulty progression: accuracy + volume unlock wider problem ranges */
+const drillLevel = (id) => {
+  const s = stats[id];
+  if (!s || !s.tries) return 1;
+  const acc = s.ok / s.tries;
+  if (s.ok >= 25 && acc >= 0.8) return 3;
+  if (s.ok >= 10 && acc >= 0.7) return 2;
+  return 1;
+};
+/* spaced review: a practiced drill comes due after an interval that grows with accuracy */
+const drillDue = (id) => {
+  const s = stats[id];
+  if (!s || !s.tries || !s.last) return false;
+  const acc = s.ok / s.tries;
+  const intervalDays = acc >= 0.85 ? 6 : acc >= 0.6 ? 3 : 1.5;
+  return (Date.now() - s.last) / 86400000 >= intervalDays;
+};
 
 let nav = { screen: "home" };
 let session = null;
@@ -736,10 +804,11 @@ function showHome() {
   const totalOk = Object.values(stats).reduce((s, x) => s + x.ok, 0);
   const rows = LESSONS.map((L, i) => {
     const ok = L.drills.reduce((s, d) => s + stat(d).ok, 0);
+    const due = L.drills.some(drillDue);
     return `<button class="lesson-row" data-lesson="${i}">
       <span class="num">${L.n}</span>
       <span class="body"><p class="t">${L.title}</p><p class="d">${L.tag}</p></span>
-      <span class="prog">${ok ? ok + " ✓" : ""}</span></button>`;
+      <span class="prog ${due ? "due" : ""}">${due ? "review" : (ok ? ok + " ✓" : "")}</span></button>`;
   }).join("");
   view.innerHTML = `
     <h1>Mental Math Gym</h1>
@@ -767,10 +836,10 @@ function showLesson(i) {
   topbar.hidden = false; topTitle.textContent = `Lecture ${L.n} · ${L.title}`; topStreak.textContent = "";
   const cards = L.cards.map(c => `<div class="tech"><h3>${c.h}</h3><p>${c.p}</p>${c.ex ? `<div class="ex">${esc(c.ex).replace(/\n/g, "<br>")}</div>` : ""}</div>`).join("");
   const drills = L.drills.map(id => {
-    const d = DRILLS[id], s = stat(id);
+    const d = DRILLS[id], s = stat(id), due = drillDue(id), lvl = drillLevel(id);
     return `<button class="drill-row" data-drill="${id}">
-      <span class="body"><p class="t">${d.name}</p><p class="d">${d.desc}</p></span>
-      <span class="prog">${s.ok ? s.ok + " ✓" : ""}</span><span class="go">→</span></button>`;
+      <span class="body"><p class="t">${d.name}${lvl > 1 ? ` <span class="lv">Lv ${lvl}</span>` : ""}</p><p class="d">${d.desc}</p></span>
+      <span class="prog ${due ? "due" : ""}">${due ? "review" : (s.ok ? s.ok + " ✓" : "")}</span><span class="go">→</span></button>`;
   }).join("");
   view.innerHTML = `${cards}<p class="kicker">Drills</p>${drills}`;
   view.querySelectorAll("[data-drill]").forEach(b => b.addEventListener("click", () => startDrill(b.dataset.drill, { backTo: "lesson", lesson: i })));
@@ -806,7 +875,8 @@ function currentDrill() {
 function nextProblem() {
   const d = currentDrill();
   session.currentId = d.id;
-  session.item = d.gen();
+  session.lvl = drillLevel(d.id);
+  session.item = d.gen(session.lvl);
   session.graded = false;
   session.t0 = Date.now();
   renderProblem(d);
@@ -815,7 +885,7 @@ function nextProblem() {
 function renderProblem(d) {
   const it = session.item, s = stat(d.id);
   topbar.hidden = false;
-  topTitle.textContent = session.workout ? "⚡ Daily Workout" : d.name;
+  topTitle.textContent = (session.workout ? "⚡ Daily Workout" : d.name) + (session.lvl > 1 ? ` · Lv ${session.lvl}` : "");
   topStreak.textContent = session.streak > 1 ? `🔥 ${session.streak}` : "";
   const acc = session.tries ? Math.round(100 * session.solved / session.tries) : null;
   let inputHtml = "";
