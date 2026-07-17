@@ -596,6 +596,10 @@ D("mix2x2", "2×2 — choose your weapon", "Pick the easiest method each time", 
   return { q: `${a} × ${b}`, kind: "num", a: a * b,
     how: `Nothing special jumps out → addition method: (${a} × ${bt}) + (${a} × ${ub}) = ${F(a * bt)} + ${a * ub} → <b>${F(a * b)}</b>.` };
 });
+/* discrimination training: the hard part isn't executing a technique, it's noticing
+   which one applies — problems arrive unlabeled, drawn from every multiplication trick */
+const SPOT_POOL = ["mult11", "sq5", "sum10", "teens", "close100", "sq2d", "addmethod", "submethod", "close2x2", "factor", "mix2x2"];
+D("spot", "Spot the technique", "Unlabeled problems from every lecture — recognize which trick fits before you compute", (lvl = 1) => DRILLS[pick(SPOT_POOL)].gen(lvl));
 
 /* ---- Lecture 8 ---- */
 D("shortdiv", "Short division by teens", "÷11 to ÷19 with a running remainder", () => {
@@ -742,7 +746,8 @@ const LESSONS = [
   { n: 1, title: "Math in Your Head!", tag: "Left to right, plus your first magic tricks",
     cards: [
       { h: "Calculate left to right", p: "Paper math goes right to left; mental math goes the way you read. Start with the biggest part of the number — it gives you an estimate immediately and the rest refines it. For 54 × 7: do 7 × 50 = 350 first, then 7 × 4 = 28, and add: 378." },
-      { h: "Multiply by 11 instantly", p: "For a 2-digit number, the answer starts and ends with its digits; the middle is their sum. If the sum passes 9, carry into the first digit.", ex: "23 × 11 → 2 [2+3] 3 = 253\n85 × 11 → 8 [13] 5 → carry → 935" },
+      { h: "Know your nines", p: "Multiples of 9 carry their own answer key: the first digit is one less than the multiplier, and the digits sum to 9. So 9 × 7 starts with 6, and 6 + 3 = 9 → 63. Shaky on 8s? Double three times: 7 → 14 → 28 → 56." },
+      { h: "Multiply by 11 instantly", p: "For a 2-digit number, the answer starts and ends with its digits; the middle is their sum. If the sum passes 9, carry into the first digit. A 3-digit number works the same way — keep the ends, insert the two neighbor sums.", ex: "23 × 11 → 2 [2+3] 3 = 253\n85 × 11 → 8 [13] 5 → carry → 935\n314 × 11 → 3 [3+1] [1+4] 4 = 3,454" },
       { h: "Square numbers ending in 5", p: "Multiply the first digit by the next digit up, then attach 25.", ex: "35² → 3 × 4 = 12, attach 25 → 1,225\n305² → 30 × 31 = 930 → 93,025" },
       { h: "Same tens, units summing to 10", p: "Like 84 × 86: first digit × next digit up, then attach the product of the units digits (as two digits).", ex: "84 × 86 → 8 × 9 = 72, 4 × 6 = 24 → 7,224" },
       { h: "Teens are easy", p: "13 × 6 is (10 × 6) + (3 × 6). For teen × teen: take one whole number, add the other's units digit, then ×10 — that's most of the answer. Finish by adding the product of both units digits.", ex: "13 × 14 → (13+4)×10 = 170, +(3×4)=12 → 182\n11 × 17 → (11+7)×10 = 180, +(1×7)=7 → 187" }
@@ -800,7 +805,7 @@ const LESSONS = [
       { h: "Factoring method", p: "Best when a number splits into small factors — easiest on memory because every result is used immediately. 97 × 22 = 97 × 11 × 2 = 1,067 × 2 = 2,134." },
       { h: "Which method when?", p: "Same numbers → squaring. Close together → close-together. Small factors → factor. Ends in 7–9 or near 100 → subtraction. Otherwise → addition. Choosing the easy path is the ‘math of least resistance’." }
     ],
-    drills: ["sq2d", "addmethod", "submethod", "close2x2", "mix2x2"] },
+    drills: ["sq2d", "addmethod", "submethod", "close2x2", "mix2x2", "spot"] },
   { n: 8, title: "The Speed of Vedic Division", tag: "Divide by 39 as if it were 4",
     cards: [
       { h: "Short division by teens", p: "For divisors 11–19, do long division but keep the small remainders in your head (or as tiny superscripts), writing only the answer." },
@@ -841,10 +846,10 @@ const LESSONS = [
       { h: "Benford's law", p: "Real-world numbers (addresses, tax returns, distances to galaxies) start with small digits far more often than large ones — the first digit is N with probability log₁₀(N+1) − log₁₀(N). That's why digit-count estimates land on the shorter answer about half the time, more than naive chance from the multiplication table would suggest." },
       { h: "The big lesson", p: "Look at the numbers before you compute: can you factor, round, cross-add, or complement your way to an easier problem? Mental math is constant simplification — the math of least resistance." }
     ],
-    drills: ["cuberoot", "sq3d", "vedic"] }
+    drills: ["cuberoot", "sq3d", "vedic", "spot"] }
 ];
 
-const WORKOUT_POOL = ["ttsprint", "mult11", "sq5", "sum10", "add2", "add3", "sub3", "comp1000", "change", "mul2x1", "mul3x1", "factor", "div1", "div2", "digitsum", "close100", "sq2d", "mix2x2", "w2n", "weekday", "sq3d", "cuberoot", "teens", "close2x2", "salestax", "pow4", "divis", "czkz"];
+const WORKOUT_POOL = ["ttsprint", "mult11", "sq5", "sum10", "add2", "add3", "sub3", "comp1000", "change", "mul2x1", "mul3x1", "factor", "div1", "div2", "digitsum", "close100", "sq2d", "mix2x2", "spot", "w2n", "weekday", "sq3d", "cuberoot", "teens", "close2x2", "salestax", "pow4", "divis", "czkz"];
 
 /* ---------- state & stats ---------- */
 const $ = (s) => document.querySelector(s);
@@ -852,24 +857,25 @@ const view = $("#view"), topbar = $("#topbar"), topTitle = $("#topTitle"), topSt
 let stats = {};
 try { stats = JSON.parse(localStorage.getItem("mmg-stats-v1") || "{}"); } catch (e) { stats = {}; }
 const saveStats = () => { try { localStorage.setItem("mmg-stats-v1", JSON.stringify(stats)); } catch (e) {} };
-const stat = (id) => stats[id] || (stats[id] = { ok: 0, tries: 0, best: 0 });
-
-/* difficulty progression: accuracy + volume unlock wider problem ranges */
-const drillLevel = (id) => {
+const stat = (id) => stats[id] || (stats[id] = { ok: 0, tries: 0, best: 0, lvl: 1, lvlN: 0, ivl: 1, acc: 0.7 });
+/* migrate pre-EWMA records: seed recent-accuracy, level, and review interval from lifetime stats */
+for (const id in stats) {
   const s = stats[id];
-  if (!s || !s.tries) return 1;
-  const acc = s.ok / s.tries;
-  if (s.ok >= 25 && acc >= 0.8) return 3;
-  if (s.ok >= 10 && acc >= 0.7) return 2;
-  return 1;
-};
-/* spaced review: a practiced drill comes due after an interval that grows with accuracy */
+  if (s.tries && s.acc === undefined) {
+    const a = s.ok / s.tries;
+    s.acc = Math.min(1, a);
+    s.lvl = (s.ok >= 25 && a >= 0.8) ? 3 : (s.ok >= 10 && a >= 0.7) ? 2 : 1;
+    s.lvlN = 0;
+    s.ivl = a >= 0.85 ? 6 : a >= 0.6 ? 3 : 1.5;
+  }
+}
+
+const drillLevel = (id) => (stats[id] && stats[id].lvl) || 1;
+/* spaced review: each success at review time expands the interval; a miss resets it */
 const drillDue = (id) => {
   const s = stats[id];
   if (!s || !s.tries || !s.last) return false;
-  const acc = s.ok / s.tries;
-  const intervalDays = acc >= 0.85 ? 6 : acc >= 0.6 ? 3 : 1.5;
-  return (Date.now() - s.last) / 86400000 >= intervalDays;
+  return (Date.now() - s.last) / 86400000 >= (s.ivl || 1);
 };
 
 let nav = { screen: "home" };
@@ -895,7 +901,7 @@ function showHome() {
     <p class="sub">Lightning-calculation techniques, one lecture at a time — with unlimited practice problems. ${totalOk ? `<b>${F(totalOk)}</b> solved so far.` : "Start with Lecture 1."}</p>
     <button class="lesson-row workout" data-workout="1">
       <span class="num">⚡</span>
-      <span class="body"><p class="t">Daily Workout</p><p class="d">Adaptive mix — prioritizes what's weak or hasn't been practiced lately</p></span>
+      <span class="body"><p class="t">Daily Workout</p><p class="d">Adaptive mix of what you've practiced — weak and long-unseen techniques come up most</p></span>
       <span class="prog"></span></button>
     <button class="lesson-row workout" data-sprint="1">
       <span class="num">⏱</span>
@@ -919,7 +925,7 @@ function showLesson(i) {
     const d = DRILLS[id], s = stat(id), due = drillDue(id), lvl = drillLevel(id);
     return `<button class="drill-row" data-drill="${id}">
       <span class="body"><p class="t">${d.name}${lvl > 1 ? ` <span class="lv">Lv ${lvl}</span>` : ""}</p><p class="d">${d.desc}</p></span>
-      <span class="prog ${due ? "due" : ""}">${due ? "review" : (s.ok ? s.ok + " ✓" : "")}</span><span class="go">→</span></button>`;
+      <span class="prog ${due ? "due" : ""}">${due ? "review" : (s.ok ? s.ok + " ✓" + (s.spd ? " · " + (s.spd / 1000).toFixed(1) + "s" : "") : "")}</span><span class="go">→</span></button>`;
   }).join("");
   view.innerHTML = `${cards}<p class="kicker">Drills</p>${drills}`;
   view.querySelectorAll("[data-drill]").forEach(b => b.addEventListener("click", () => startDrill(b.dataset.drill, { backTo: "lesson", lesson: i })));
@@ -934,18 +940,21 @@ function startDrill(drillId, opts) {
 }
 
 function workoutPick() {
-  /* spacing + weakness weighting: long-unseen and low-accuracy drills get picked more */
+  /* only techniques you've actually practiced — never a method from an unwatched lecture;
+     long-unseen and recently-weak drills get picked more */
   const now = Date.now();
-  const weights = WORKOUT_POOL.map(id => {
+  let pool = WORKOUT_POOL.filter(id => stat(id).tries > 0);
+  if (!pool.length) pool = LESSONS[0].drills.slice();
+  const weights = pool.map(id => {
     const s = stat(id);
     if (!s.tries) return 1;
     const days = s.last ? Math.min(14, (now - s.last) / 86400000) : 14;
-    const err = 1 - s.ok / s.tries;
+    const err = 1 - (s.acc === undefined ? s.ok / s.tries : s.acc);
     return 0.5 + days * (0.5 + 2 * err);
   });
   let total = weights.reduce((a, b) => a + b, 0), roll = Math.random() * total;
-  for (let i = 0; i < weights.length; i++) { roll -= weights[i]; if (roll <= 0) return WORKOUT_POOL[i]; }
-  return WORKOUT_POOL[WORKOUT_POOL.length - 1];
+  for (let i = 0; i < weights.length; i++) { roll -= weights[i]; if (roll <= 0) return pool[i]; }
+  return pool[pool.length - 1];
 }
 
 function currentDrill() {
@@ -1054,25 +1063,52 @@ function answerText(it) {
   return F(it.a);
 }
 
+/* Every graded answer updates the drill's learning model:
+   - ivl: the first answer after the interval elapses is the retention test —
+     pass and the interval expands (×2.2, or from the actual gap if longer), miss and it resets to 1 day
+   - acc: exponential moving average, so recent performance dominates old history
+   - spd: EWMA of correct-answer time — fluency, not just accuracy
+   - lvl: 85%-rule controller — running hot (≥90%) widens the numbers, cold (<70%) narrows them */
+function recordAnswer(s, correct, elapsed) {
+  const now = Date.now();
+  const gapDays = s.last ? (now - s.last) / 86400000 : 0;
+  if (!s.tries) s.ivl = 1;
+  else if (gapDays >= (s.ivl || 1)) s.ivl = correct ? Math.min(90, Math.max((s.ivl || 1) * 2.2, gapDays * 1.2)) : 1;
+  s.tries++; s.last = now;
+  s.acc = (s.acc === undefined ? 0.7 : s.acc) * 0.85 + (correct ? 0.15 : 0);
+  if (correct) s.spd = s.spd ? Math.round(s.spd * 0.7 + Math.min(elapsed, 60000) * 0.3) : Math.min(elapsed, 60000);
+  const prev = s.lvl || 1;
+  s.lvlN = (s.lvlN || 0) + 1;
+  if (s.lvlN >= 8) {
+    if (s.acc >= 0.9 && prev < 3) { s.lvl = prev + 1; s.lvlN = 0; s.acc = 0.8; }
+    else if (s.acc < 0.7 && prev > 1) { s.lvl = prev - 1; s.lvlN = 0; s.acc = 0.8; }
+  }
+  return (s.lvl || 1) - prev;
+}
+
 function finishGrade(correct, given) {
   session.graded = true;
   session.tries++;
   const s = stat(session.currentId);
-  s.tries++; s.last = Date.now();
+  const elapsed = Date.now() - session.t0;
+  const lvlShift = recordAnswer(s, correct, elapsed);
   if (correct) { session.solved++; session.streak++; s.ok++; if (session.streak > s.best) s.best = session.streak; }
   else session.streak = 0;
   saveStats();
-  const elapsed = Date.now() - session.t0;
+  const secs = (elapsed / 1000).toFixed(1);
   let verdict;
   if (session.item.factKey) {
     updateFact(session.item.factKey, correct, elapsed);
-    const secs = (elapsed / 1000).toFixed(1);
     verdict = correct
       ? (elapsed <= 1500 ? `Correct in ${secs} s ⚡ — that's automatic!` : `Correct in ${secs} s — aim under 1.5 s`)
       : `Not quite — it's ${answerText(session.item)}.`;
+  } else if (correct) {
+    verdict = pick(["Correct", "Nailed it", "Yes", "Lightning"]) + ` — ${secs} s` + (s.spd && s.tries > 3 ? ` (your average: ${(s.spd / 1000).toFixed(1)} s)` : "");
   } else {
-    verdict = correct ? pick(["Correct!", "Nailed it!", "Yes!", "Lightning!"]) : "Not quite — it's " + answerText(session.item) + ".";
+    verdict = "Not quite — it's " + answerText(session.item) + ".";
   }
+  if (lvlShift > 0) verdict += ` · 📈 Level ${s.lvl} — wider numbers ahead`;
+  else if (lvlShift < 0) verdict += ` · easing back to Level ${s.lvl}`;
   showFeedback(correct, verdict);
 }
 
@@ -1080,7 +1116,8 @@ function reveal() {
   if (session.graded) return;
   session.graded = true;
   session.tries++;
-  const s = stat(session.currentId); s.tries++; s.last = Date.now();
+  const s = stat(session.currentId);
+  recordAnswer(s, false, Date.now() - session.t0);
   session.streak = 0;
   saveStats();
   if (session.item.factKey) updateFact(session.item.factKey, false, 6000);

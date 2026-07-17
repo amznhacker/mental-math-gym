@@ -1,6 +1,6 @@
 /* Mental Math Gym service worker: network-first, cache fallback for offline use.
    Bump CACHE on breaking changes to purge old entries. */
-const CACHE = "mmg-v1";
+const CACHE = "mmg-v2";
 const ASSETS = ["./", "./index.html", "./manifest.webmanifest", "./icon-180.png", "./icon-512.png"];
 
 self.addEventListener("install", (e) => {
