@@ -253,6 +253,13 @@ D("teens", "Multiplying teens", "Numbers between 10 and 20, fast", () => {
       how: `${b} × 10 = <b>${b * 10}</b>, plus ${b} × ${a - 10} = <b>${b * (a - 10)}</b> → <b>${a * b}</b>.` };
   }
   const a = R(11, 19), b = R(11, 19);
+  if (a === 11 || b === 11) {
+    const n = a === 11 ? b : a, t = Math.floor(n / 10), u = n % 10, s = t + u;
+    return { q: `${a} × ${b}`, kind: "num", a: a * b,
+      how: `11 is one of the factors, so use the ×11 trick on ${n} instead: ` + (s > 9
+        ? `${t} + ${u} = <b>${s}</b> — carry: middle keeps ${s % 10}, first digit becomes ${t + 1} → <b>${a * b}</b>.`
+        : `split ${t}_${u} and insert the digit sum ${t}+${u}=<b>${s}</b> in the middle → <b>${a * b}</b>.`) };
+  }
   return { q: `${a} × ${b}`, kind: "num", a: a * b,
     how: `${a} + ${b % 10} = <b>${a + b % 10}</b>, ×10 → <b>${(a + b % 10) * 10}</b>, plus ${a % 10} × ${b % 10} = <b>${(a % 10) * (b % 10)}</b> → <b>${a * b}</b>.` };
 });
@@ -362,6 +369,11 @@ D("change", "Making change", "Dollars to one less, cents to 100", () => {
 D("mul2x1", "2-by-1 multiplication", "The building block of everything", (lvl = 1) => {
   const a = R(21, lvl === 1 ? 59 : 99), b = R(3, 9);
   const t = Math.floor(a / 10) * 10, u = a % 10;
+  if (u >= 8) {
+    const up = t + 10, back = up - a;
+    return { q: `${a} × ${b}`, kind: "num", a: a * b,
+      how: `${a} ends in ${u} — round up and subtract: ${b} × ${up} = <b>${b * up}</b>, minus ${b} × ${back} = <b>${b * back}</b> → <b>${F(a * b)}</b>.` };
+  }
   return { q: `${a} × ${b}`, kind: "num", a: a * b,
     how: `${b} × ${t} = <b>${b * t}</b>, plus ${b} × ${u} = <b>${b * u}</b> → <b>${F(a * b)}</b>.` };
 });
@@ -422,6 +434,24 @@ D("sevenths", "The sevenths circle", "One cycle to rule them all: 142857", () =>
   return { q: `${k}/7 = ?`, kind: "mc", choices: shuffle([correct, ...opts]), a: correct,
     how: `All sevenths cycle through 1-4-2-8-5-7. Since ${k}/7 ≈ 0.${Math.floor(k * 10 / 7)}, start the cycle there → <b>${correct}</b>` };
 });
+D("czkz", "Create-a-zero, kill-a-zero", "Add a multiple of the divisor to force a trailing zero", () => {
+  const d = R(1, 8) * 10 + pick([1, 3, 7, 9]);
+  const yes = Math.random() < 0.5;
+  let n = R(200, 9800);
+  if (yes) n -= n % d; else if (n % d === 0) n += R(1, d - 1);
+  let cur = n, steps = [], guard = 0;
+  while (cur >= d * 10 && guard < 12) {
+    guard++;
+    if (cur % 10 === 0) { cur = cur / 10; steps.push(`→ <b>${F(cur)}</b>`); continue; }
+    let k = 1; while ((cur + k * d) % 10 !== 0) k++;
+    cur = cur + k * d;
+    steps.push(`+ ${k}×${d} → <b>${F(cur)}</b>`);
+  }
+  while (cur % 10 === 0 && cur !== 0) { cur = cur / 10; steps.push(`→ <b>${F(cur)}</b>`); }
+  const ok = cur % d === 0;
+  return { q: `Is ${F(n)} divisible by ${d}?`, kind: "mc", choices: ["Yes", "No"], a: ok ? "Yes" : "No",
+    how: `${steps.join(" ")}. ${F(cur)} ${ok ? `is ${cur / d} × ${d}` : `is not a multiple of ${d}`} → <b>${ok ? "divisible" : "not divisible"}</b>.` };
+});
 
 /* ---- Lecture 5 ---- */
 D("digits", "How many digits?", "Size up an answer before computing", () => {
@@ -454,15 +484,24 @@ D("grocery", "Grocery-bill estimate", "Round each item to the nearest 50¢, keep
     sub: "Estimate the total — within $1.00 counts", kind: "dec", a: sum, tol: 1.0,
     how: `Rounded to half-dollars: ${items.map(p => (Math.round(p * 2) / 2).toFixed(2)).join(" + ")} = <b>$${rsum.toFixed(2)}</b>. True total: $${sum.toFixed(2)} — the rounding errors mostly cancel.` };
 });
-D("salestax", "Sales tax estimates", "A tax rate is just an easy multiplication", (lvl = 1) => {
+D("salestax", "Sales tax estimates", "Get the whole-percent tax, then add or subtract a clean fraction of it", (lvl = 1) => {
   const price = R(2, 95) * 100;
-  const r = pick(lvl >= 2 ? [3, 4, 5, 6, 7, 8, 9, 4.5, 6.5, 8.5] : [3, 4, 5, 6, 7, 8, 9]);
+  const whole = pick([3, 4, 5, 6, 7, 8, 9]);
+  if (lvl === 1 || Math.random() < 0.3) {
+    const ans = +(price * whole / 100).toFixed(2);
+    return { q: `${whole}% tax on $${F(price)}`, sub: "Exact tax in dollars", kind: "dec", a: ans, tol: 0.01,
+      how: `1% of $${F(price)} is ${F(price / 100)}, so ${whole}% is ${whole} × ${F(price / 100)} → <b>$${F(ans)}</b>.` };
+  }
+  const k = pick([2, 4]); // extra = 1/k percent, i.e. 0.5% or 0.25%
+  const extra = 1 / k;
+  const addUp = Math.random() < 0.5;
+  const base = addUp ? whole : whole + 1;
+  const r = +(addUp ? whole + extra : base - extra).toFixed(2);
+  const n = k * base;
+  const baseTax = price * base / 100;
   const ans = +(price * r / 100).toFixed(2);
-  const whole = Math.floor(r);
   return { q: `${r}% tax on $${F(price)}`, sub: "Exact tax in dollars", kind: "dec", a: ans, tol: 0.01,
-    how: r === whole
-      ? `1% of $${F(price)} is ${F(price / 100)}, so ${whole}% is ${whole} × ${F(price / 100)} → <b>$${F(ans)}</b>.`
-      : `${whole}% first: ${whole} × ${F(price / 100)} = <b>${F(price * whole / 100)}</b>; the extra ½% is half of 1% → +${F(price / 200)} → <b>$${F(ans)}</b>.` };
+    how: `Start from ${base}%: ${base} × ${F(price / 100)} = <b>${F(baseTax)}</b>. Since ${base}/${n} = ${extra}, ${addUp ? "add" : "subtract"} that tax ÷ ${n} → ${addUp ? "+" : "−"}${F(baseTax / n)} → <b>$${F(ans)}</b>.` };
 });
 D("rule70", "Rule of 70", "Years for money to double", () => {
   const r = pick([1, 2, 5, 7, 10, 14]);
@@ -530,8 +569,32 @@ D("close2x2", "Close-together 2×2", "26 × 23: round base, cross-add", () => {
 });
 D("mix2x2", "2×2 — choose your weapon", "Pick the easiest method each time", () => {
   const a = R(21, 99), b = R(21, 99);
+  if (a === b) {
+    const d = a % 10 <= 5 ? a % 10 : a % 10 - 10, z1 = a - d, z2 = a + d;
+    return { q: `${a} × ${b}`, kind: "num", a: a * b,
+      how: `Same number twice → squaring method: slide ${Math.abs(d)} to ${z1} and ${z2}: ${z1} × ${z2} = <b>${F(z1 * z2)}</b>, plus ${Math.abs(d)}² = ${d * d} → <b>${F(a * b)}</b>.` };
+  }
+  if (Math.abs(a - b) <= 10) {
+    const base = Math.round((a + b) / 20) * 10, da = a - base, db = b - base;
+    return { q: `${a} × ${b}`, kind: "num", a: a * b,
+      how: `Close together → cross-add: base ${base}, distances ${da} and ${db}: ${a} + (${db}) = <b>${a + db}</b> → ${F((a + db) * base)}, plus ${da} × ${db} = <b>${da * db}</b> → <b>${F(a * b)}</b>.` };
+  }
+  for (let k = 2; k <= 9; k++) {
+    if (b % k === 0) {
+      const f2 = b / k, step1 = a * k;
+      return { q: `${a} × ${b}`, kind: "num", a: a * b,
+        how: `${b} factors into small numbers → factoring method: ${b} = ${k} × ${f2}: ${a} × ${k} = <b>${F(step1)}</b>, then × ${f2} → <b>${F(a * b)}</b>.` };
+    }
+  }
+  const ub = b % 10;
+  if (ub >= 7) {
+    const up = Math.ceil(b / 10) * 10, back = up - b;
+    return { q: `${a} × ${b}`, kind: "num", a: a * b,
+      how: `${b} ends in ${ub} or sits near a round number → subtraction method: (${a} × ${up}) − (${a} × ${back}) = ${F(a * up)} − ${F(a * back)} → <b>${F(a * b)}</b>.` };
+  }
+  const bt = Math.floor(b / 10) * 10;
   return { q: `${a} × ${b}`, kind: "num", a: a * b,
-    how: `One way: (${a} × ${Math.floor(b / 10) * 10}) + (${a} × ${b % 10}) = ${F(a * (Math.floor(b / 10) * 10))} + ${a * (b % 10)} → <b>${F(a * b)}</b>. Same digits → square trick; close together → cross-add; factorable → factor.` };
+    how: `Nothing special jumps out → addition method: (${a} × ${bt}) + (${a} × ${ub}) = ${F(a * bt)} + ${a * ub} → <b>${F(a * b)}</b>.` };
 });
 
 /* ---- Lecture 8 ---- */
@@ -541,15 +604,19 @@ D("shortdiv", "Short division by teens", "÷11 to ÷19 with a running remainder"
   return { q: `${F(n)} ÷ ${d}`, sub: "Quotient and remainder (paper allowed!)", kind: "rem", a: q, a2: r,
     how: `${d} × ${F(q)} = ${F(d * q)}; ${F(n)} − ${F(d * q)} = <b>${r}</b> → ${F(q)} r ${r}.` };
 });
-D("vedic", "Vedic division", "Divide by 29 as easily as by 3", (lvl = 1) => {
-  const up = [19, 29, 39, 49, 59, 79, 89], down = [21, 31, 41, 51, 61, 71, 81, 91];
-  const d = pick(lvl >= 2 ? up.concat(down) : up);
+D("vedic", "Vedic division", "Round the divisor to a multiple of 10, correct as you go", (lvl = 1) => {
+  const hi = lvl >= 2 ? 98 : 59;
+  const pool = []; for (let x = 21; x <= hi; x++) if (x % 10 !== 0) pool.push(x);
+  const d = pick(pool);
   const n = R(10000, 99999);
   const q = Math.floor(n / d), r = n % d;
+  const last = d % 10, roundUp = last >= 5;
+  const base = roundUp ? d + (10 - last) : d - last;
+  const mult = roundUp ? 10 - last : last;
   return { q: `${F(n)} ÷ ${d}`, sub: "Quotient and remainder — try the Vedic method on paper", kind: "rem", a: q, a2: r,
-    how: d % 10 === 9
-      ? `Divide by ${(d + 1) / 10} instead of ${d}, adding each quotient digit back in as you go (that compensates for using ${d + 1} instead of ${d}). Answer: <b>${F(q)} r ${r}</b>.`
-      : `Mirror version: divide by ${(d - 1) / 10} instead of ${d}, subtracting each quotient digit from the next step (that compensates for using ${d - 1} instead of ${d}). Answer: <b>${F(q)} r ${r}</b>.` };
+    how: roundUp
+      ? `Divide by ${base / 10} instead of ${d} (round up to ${base}), adding ${mult}× each quotient digit back into the next step — that compensates for using ${base} instead of ${d}. Answer: <b>${F(q)} r ${r}</b>.`
+      : `Divide by ${base / 10} instead of ${d} (round down to ${base}), subtracting ${mult}× each quotient digit at the next step — that compensates for using ${base} instead of ${d}. Answer: <b>${F(q)} r ${r}</b>.` };
 });
 
 /* ---- Lecture 9 ---- */
@@ -637,9 +704,21 @@ D("cubeest", "2-digit cubes, estimated", "Down d, down d, up 2d", () => {
 });
 D("mul3x2", "3-by-2 multiplication", "Factor, or split and distribute", (lvl = 1) => {
   const a = R(112, 989), b = R(12, lvl === 1 ? 39 : 89);
+  if (b % 10 === 0) {
+    const b1 = b / 10;
+    return { q: `${a} × ${b}`, kind: "num", a: a * b,
+      how: `${b} ends in 0 — ignore it and multiply: ${a} × ${b1} = <b>${F(a * b1)}</b>, then attach the 0 → <b>${F(a * b)}</b>.` };
+  }
+  for (let k = 2; k <= 9; k++) {
+    if (b % k === 0) {
+      const f2 = b / k, step1 = a * k;
+      return { q: `${a} × ${b}`, kind: "num", a: a * b,
+        how: `${b} = ${k} × ${f2}: ${a} × ${k} = <b>${F(step1)}</b>, then × ${f2} → <b>${F(a * b)}</b>.` };
+    }
+  }
   const bt = Math.floor(b / 10) * 10;
   return { q: `${a} × ${b}`, kind: "num", a: a * b,
-    how: `(${a} × ${bt}) + (${a} × ${b % 10}) = ${F(a * bt)} + ${F(a * (b % 10))} → <b>${F(a * b)}</b>. If ${b} factors into small numbers, that's usually easier.` };
+    how: `${b} doesn't factor into small numbers — split and distribute: (${a} × ${bt}) + (${a} × ${b % 10}) = ${F(a * bt)} + ${F(a * (b % 10))} → <b>${F(a * b)}</b>.` };
 });
 D("pow4", "4th powers", "Square, then square again", (lvl = 1) => {
   const n = R(11, lvl >= 3 ? 40 : lvl === 2 ? 30 : 20);
@@ -666,7 +745,7 @@ const LESSONS = [
       { h: "Multiply by 11 instantly", p: "For a 2-digit number, the answer starts and ends with its digits; the middle is their sum. If the sum passes 9, carry into the first digit.", ex: "23 × 11 → 2 [2+3] 3 = 253\n85 × 11 → 8 [13] 5 → carry → 935" },
       { h: "Square numbers ending in 5", p: "Multiply the first digit by the next digit up, then attach 25.", ex: "35² → 3 × 4 = 12, attach 25 → 1,225\n305² → 30 × 31 = 930 → 93,025" },
       { h: "Same tens, units summing to 10", p: "Like 84 × 86: first digit × next digit up, then attach the product of the units digits (as two digits).", ex: "84 × 86 → 8 × 9 = 72, 4 × 6 = 24 → 7,224" },
-      { h: "Teens are easy", p: "13 × 6 is (10 × 6) + (3 × 6). For teen × teen: add one number to the other's units digit, ×10, then add the product of the units.", ex: "13 × 14 → (13+4) × 10 = 170, +3×4 → 182" }
+      { h: "Teens are easy", p: "13 × 6 is (10 × 6) + (3 × 6). For teen × teen: take one whole number, add the other's units digit, then ×10 — that's most of the answer. Finish by adding the product of both units digits.", ex: "13 × 14 → (13+4)×10 = 170, +(3×4)=12 → 182\n11 × 17 → (11+7)×10 = 180, +(1×7)=7 → 187" }
     ],
     drills: ["ttsprint", "warmup", "mult11", "sq5", "sum10", "teens"] },
   { n: 2, title: "Mental Addition and Subtraction", tag: "One digit at a time — and the power of complements",
@@ -692,14 +771,15 @@ const LESSONS = [
       { h: "Overshooting", p: "770 ÷ 79: 79 × 10 = 790 is too big by 20, so the answer is 9 with remainder 79 − 20 = 59. Going over on purpose is often faster than creeping up." },
       { h: "Simplify before dividing", p: "Dividing by 5? Double both numbers: 1234 ÷ 5 = 2468 ÷ 10 = 246.8. Both numbers share a factor? Cancel it first: 2012 ÷ 24 = 503 ÷ 6." },
       { h: "Divisibility tests", p: "By 2/4/8: check the last 1/2/3 digits. By 5 or 10: last digit. By 3 or 9: digit sum. By 6: even and digit-sum divisible by 3. By 12: pass both the 3-test and the 4-test. By 11: alternate adding and subtracting digits. By 7: double the last digit, subtract from the rest, repeat (161 → 16 − 2 = 14 ✓)." },
-      { h: "The sevenths circle", p: "Memorize 1/7 = 0.142857… and you know them all — every k/7 cycles through the same six digits 1-4-2-8-5-7, just starting at a different point.", ex: "1/7 .142857  2/7 .285714  3/7 .428571\n4/7 .571428  5/7 .714285  6/7 .857142" }
+      { h: "The sevenths circle", p: "Memorize 1/7 = 0.142857… and you know them all — every k/7 cycles through the same six digits 1-4-2-8-5-7, just starting at a different point.", ex: "1/7 .142857  2/7 .285714  3/7 .428571\n4/7 .571428  5/7 .714285  6/7 .857142" },
+      { h: "Create-a-zero, kill-a-zero", p: "To test whether one number divides another, add or subtract a multiple of the divisor so the number ends in zero, strip the zero, and repeat until what's left is small enough to recognize.", ex: "Is 4913 divisible by 17?\n4913 + 17 = 4930 → 493\n493 + 17 = 510 → 51 = 3 × 17 ✓" }
     ],
-    drills: ["div1", "div2", "divis", "sevenths"] },
+    drills: ["div1", "div2", "divis", "sevenths", "czkz"] },
   { n: 5, title: "The Art of Guesstimation", tag: "Close enough, fast — sizes, doubling, roots",
     cards: [
       { h: "Count digits before you compute", p: "An x-digit × y-digit product has x+y or x+y−1 digits. Multiply the leading digits: 10 or more → the longer answer; 4 or less → the shorter; 5–9 → could be either. Division: the answer has (digits of a) − (digits of b) digits, or one more." },
       { h: "Round and add", p: "Estimating a grocery bill? Round each price to the nearest half dollar as it's rung up. Errors cancel; totals land close." },
-      { h: "Sales tax without fear", p: "1% is just the price with the decimal moved two places — so 6% tax is that number times 6. For half-percent rates like 6.5%, add half of the 1% on top.", ex: "6% of $23,400 → 1% = 234 → ×6 = $1,404\n6.5% → add 234 ÷ 2 → $1,521" },
+      { h: "Sales tax without fear", p: "1% is just the price with the decimal moved two places, so a whole-percent rate is that number times the rate. For an extra fraction of a percent, divide the whole-percent tax by (whole% ÷ extra%) and add — or start one percent higher and subtract, if that's cleaner.", ex: "6% tax on $31,500 → 315 × 6 = $1,890\n+0.25% (→6.25%) — 6÷24=0.25, so add 1,890÷24 ≈ $1,970\n8.5% → take 8% tax, add it ÷16 (8÷16=0.5)\n8.75% → take 9% tax, subtract it ÷36 (9÷36=0.25)" },
       { h: "Rule of 70", p: "Money at r% a year doubles in about 70 ÷ r years. At 5%, about 14 years; at 10%, about 7." },
       { h: "Square roots: divide and average", p: "To estimate √40: guess 6 (6² = 36). Divide 40 ÷ 6 ≈ 6.67. Average the two: 6.33. One round of this is usually accurate to a couple of decimal places.", ex: "√40 → guess 6 → 40÷6 = 6.67 → avg 6.33 (true: 6.32…)" }
     ],
@@ -709,7 +789,7 @@ const LESSONS = [
       { h: "Casting out nines", p: "Reduce any number to a single digit by summing digits (repeat until one digit). The reduced answer must match the reduced problem — for +, −, and ×. A mismatch proves an error; a match is strong (not certain) evidence you're right.", ex: "314 × 159 = 49,926?\n314→8, 159→6, 8×6=48→3; 49,926→30→3 ✓" },
       { h: "Why it works", p: "A number's digit sum is its remainder when divided by 9 — so you're just checking the whole calculation modulo 9." },
       { h: "The close-together method", p: "For numbers near a round base z: (z+a)(z+b) = (z+a+b) × z + ab. Cross-add one number with the other's distance, multiply by the base, add the product of the distances.", ex: "107 × 111 → 107+11 = 118 → 11,800 + 7×11 → 11,877\n96 × 97 → 96−3 = 93 → 9,300 + (−4)(−3) → 9,312" },
-      { h: "Criss-cross multiplication", p: "On paper you can write just the answer to a 2×2 (or bigger): units product first, then the criss-cross (outer + inner products), then the tens product — carrying as you go. Nothing else gets written down." }
+      { h: "Criss-cross multiplication", p: "On paper you can write just the answer to a 2×2 (or bigger): units product first, then the criss-cross (outer + inner products), then the tens product — carrying as you go. Nothing else gets written down. Fibonacci described this method in Liber Abaci (1202)." }
     ],
     drills: ["digitsum", "castcheck", "close100"] },
   { n: 7, title: "Intermediate Multiplication", tag: "Five ways to crack any 2-by-2",
@@ -726,7 +806,7 @@ const LESSONS = [
       { h: "Short division by teens", p: "For divisors 11–19, do long division but keep the small remainders in your head (or as tiny superscripts), writing only the answer." },
       { h: "The Vedic idea", p: "Dividing by 39 is hard; dividing by 40 is easy. Divide by 4 (shifting the decimal), and after each quotient digit, add that digit back into the next step — this exactly compensates for using 40 instead of 39.", ex: "13,571 ÷ 39: 4 into 13 → 3 r 1; 4 into 15+3 → 4 r 2;\n4 into 27+4 → 7 …  answer 347 r 38" },
       { h: "When a step gives 10 or more", p: "Carry the tens digit of that quotient into the previous answer digit and keep going. At the very end, compute the remainder against the true divisor." },
-      { h: "Works best when", p: "The divisor ends in 8 or 9 (round up), just like the subtraction method for multiplication. Divisors ending in 1 or 2 have a mirror-image version that rounds down." }
+      { h: "Choosing which way to round", p: "Round the divisor to the nearest multiple of 10 and use its leading digit as the small divisor. Round up for a divisor ending in 5–9 — add back (10 − last digit) × each quotient digit as you go. Round down for a divisor ending in 1–4 — subtract back last digit × each quotient digit instead.", ex: "39 → up to 40 (off by 1): add 1× each digit\n58 → up to 60 (off by 2): add 2× each digit\n42 → down to 40 (off by 2): subtract 2× each digit" }
     ],
     drills: ["shortdiv", "vedic"] },
   { n: 9, title: "Memorizing Numbers", tag: "The Major system: turn numbers into words",
@@ -749,22 +829,22 @@ const LESSONS = [
     cards: [
       { h: "3-digit squares", p: "Same slide trick: 108² → 100 × 116 + 8² = 11,664. For 755², ‘push together, pull apart’: 755+755 = 1,510 → split as 800 × 710, add 45² → 570,025." },
       { h: "4-digit squares", p: "2345²: slide 345 to get 2,000 × 2,690 = 5,380,000. Park 380 as a Major-system word, square 345 the same way (119,025), recombine: 5,499,025. The mnemonic is what makes it possible." },
-      { h: "Cubes", p: "Estimate n³ by sliding down d twice and up 2d… precisely: z × z × (z+3d). For the exact value use z(z(z+3d) + 3d²) + d³ — the corrections 3d² and d³ come from a tiny fixed table.", ex: "43³ ≈ 40 × 40 × 49 = 78,400 (exact 79,507)" },
+      { h: "Cubes", p: "Estimate n³ by sliding down d twice and up 2d… precisely: z × z × (z+3d). For the exact value use z(z(z+3d) + 3d²) + d³ — the corrections 3d² and d³ come from a tiny fixed table, keyed to the last digit of n.", ex: "43³ ≈ 40 × 40 × 49 = 78,400 (exact 79,507)\nlast digit → 3d²:  1/9→3  2/8→12  3/7→27  4/6→48  5→75\nlast digit → d³:  1→+1  2→+8  3→+27  4→+64  5→+125\n            6→−64  7→−27  8→−8  9→−1" },
       { h: "4th powers for free", p: "n⁴ is just n² squared: turn 2-digit numbers into a 2-digit square followed by a 3- or 4-digit square — both skills you already have." },
-      { h: "3-by-2 multiplication", p: "Easiest when the 2-digit number factors: 365 × 24 = 365 × 6 × 4. Or factor the 3-digit number into 2×1 pieces: 47 × 126 = 47 × 63 × 2. Last resort: split and distribute, 47 × 283 = 47 × 280 + 47 × 3." }
+      { h: "3-by-2 multiplication", p: "Easiest first: if a number ends in 0, ignore the zeros until the end. Next easiest: the 2-digit number factors — 365 × 24 = 365 × 6 × 4 (hours in a year). Or factor the 3-digit number into 2×1 pieces: 47 × 126 = 47 × 63 × 2. Last resort: split and distribute, 47 × 283 = 47 × 280 + 47 × 3." }
     ],
     drills: ["sq3d", "cube", "cubeest", "mul3x2", "pow4", "sq4d"] },
   { n: 12, title: "Masters of Mental Math", tag: "Cube roots, Benford's law, and the big picture",
     cards: [
       { h: "Cube roots by observation", p: "For a perfect cube of a 2-digit number: the thousands tell you the tens digit (bracket between consecutive cubes of 1–10), and the last digit gives the units — cubes of 1–10 all end differently.", ex: "∛54,872 → 54 is between 3³=27 and 4³=64 → 30s\nends in 2 → only 8³ ends in 2 → 38" },
       { h: "The last-digit pattern", p: "1→1, 4→4, 5→5, 6→6, 9→9 match themselves; 2 and 8 swap; 3 and 7 swap; 0→0. That's why the units digit of the cube betrays the root." },
-      { h: "Benford's law", p: "Real-world numbers start with 1 far more often than 9 — so digit-count estimates land on the shorter answer about half the time, more than naive chance suggests." },
+      { h: "Benford's law", p: "Real-world numbers (addresses, tax returns, distances to galaxies) start with small digits far more often than large ones — the first digit is N with probability log₁₀(N+1) − log₁₀(N). That's why digit-count estimates land on the shorter answer about half the time, more than naive chance from the multiplication table would suggest." },
       { h: "The big lesson", p: "Look at the numbers before you compute: can you factor, round, cross-add, or complement your way to an easier problem? Mental math is constant simplification — the math of least resistance." }
     ],
     drills: ["cuberoot", "sq3d", "vedic"] }
 ];
 
-const WORKOUT_POOL = ["ttsprint", "mult11", "sq5", "sum10", "add2", "add3", "sub3", "comp1000", "change", "mul2x1", "mul3x1", "factor", "div1", "div2", "digitsum", "close100", "sq2d", "mix2x2", "w2n", "weekday", "sq3d", "cuberoot", "teens", "close2x2", "salestax", "pow4", "divis"];
+const WORKOUT_POOL = ["ttsprint", "mult11", "sq5", "sum10", "add2", "add3", "sub3", "comp1000", "change", "mul2x1", "mul3x1", "factor", "div1", "div2", "digitsum", "close100", "sq2d", "mix2x2", "w2n", "weekday", "sq3d", "cuberoot", "teens", "close2x2", "salestax", "pow4", "divis", "czkz"];
 
 /* ---------- state & stats ---------- */
 const $ = (s) => document.querySelector(s);
